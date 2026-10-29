@@ -10,7 +10,7 @@
     python scripts/compare_models.py --source samples/images --models early_fire_smoke
 
 产出:
-    默认在素材旁创建 <素材名>_results/，例如 samples/images_results/
+    默认在 samples/images_results/ 下创建 run_001、run_002 等子目录。
     detections.csv   逐帧明细
     summary.csv      每个模型的汇总（平均延迟、有检出帧占比）
     *.jpg            可选，带框的截图（--save-images）
@@ -36,6 +36,7 @@ MODELS = {
 }
 
 IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+VIDEO_EXT = {".mp4", ".avi", ".mov", ".mkv", ".m4v", ".wmv"}
 
 
 def collect_frames(source: Path, stride: int):
@@ -45,12 +46,14 @@ def collect_frames(source: Path, stride: int):
     items = []
     if source.is_dir():
         for p in sorted(source.iterdir()):
-            if p.suffix.lower() in IMG_EXT:
-                img = cv2.imread(str(p))
-                items.append((p.name, 0, img, str(p)))
+            if p.is_file() and p.suffix.lower() in IMG_EXT | VIDEO_EXT:
+                items.extend(collect_frames(p, stride))
     elif source.suffix.lower() in IMG_EXT:
         img = cv2.imread(str(source))
-        items.append((source.name, 0, img, str(source)))
+        if img is not None:
+            items.append((source.name, 0, img, str(source)))
+        else:
+            print(f"无法读取图片: {source}")
     else:
         cap = cv2.VideoCapture(str(source))
         fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
@@ -66,16 +69,19 @@ def collect_frames(source: Path, stride: int):
     return items
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, required=True)
-    ap.add_argument("--models", nargs="*", choices=list(MODELS), default=list(MODELS))
+    ap.add_argument("--models", nargs="+", choices=list(MODELS), default=list(MODELS))
     ap.add_argument("--conf", type=float, default=0.10)
     ap.add_argument("--stride", type=int, default=5, help="视频抽帧间隔")
-    ap.add_argument("--out", type=Path, help="结果目录；默认在素材旁创建 <素材名>_results")
+    ap.add_argument("--out", type=Path, help="结果父目录；默认 samples/images_results")
     ap.add_argument("--save-images", action="store_true", help="保存带检测框的帧")
+    ap.add_argument("--show-images", action="store_true", help="显示每帧检测结果，按任意键继续")
     ap.add_argument("--device", help="推理设备，如 0（首张 GPU）或 cpu；省略时自动选择")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
+    if args.stride < 1:
+        ap.error("--stride 必须是正整数")
 
     from ultralytics import YOLO
 
@@ -84,9 +90,7 @@ def main() -> int:
         return 2
 
     if args.out is None:
-        source = args.source.resolve()
-        name = source.name if source.is_dir() else source.stem
-        args.out = source.parent / f"{name}_results"
+        args.out = ROOT / "samples" / "images_results"
 
     frames = collect_frames(args.source, args.stride)
     if not frames:
@@ -95,6 +99,17 @@ def main() -> int:
     print(f"素材: {args.source}  帧数: {len(frames)}")
 
     args.out.mkdir(parents=True, exist_ok=True)
+    parent = args.out
+    numbers = [int(p.name[4:]) for p in parent.iterdir()
+               if p.is_dir() and p.name.startswith("run_") and p.name[4:].isdigit()]
+    number = max(numbers, default=0) + 1
+    while True:
+        args.out = parent / f"run_{number:03d}"
+        try:
+            args.out.mkdir()
+            break
+        except FileExistsError:
+            number += 1
     print(f"结果目录: {args.out.resolve()}")
     rows, summary = [], []
 
@@ -128,10 +143,19 @@ def main() -> int:
                     "infer_ms": round(ms, 1),
                 }
             )
-            if args.save_images and confs:
+            if args.save_images and confs or args.show_images:
                 import cv2
 
-                cv2.imwrite(str(args.out / f"{name}_{Path(label).stem}.jpg"), r.plot())
+                plotted = r.plot()
+                if args.save_images and confs:
+                    filename = f"{name}_{Path(label.split('#')[0]).stem}"
+                    if "#" in label:
+                        filename += f"_frame_{idx:06d}"
+                    cv2.imwrite(str(args.out / f"{filename}.jpg"), plotted)
+                if args.show_images:
+                    cv2.imshow(f"{name} - {label}", plotted)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
         summary.append(
             {
                 "model": name,
@@ -147,6 +171,10 @@ def main() -> int:
             }
         )
         print(f"[完成] {name}: {len(times)} 帧, 有检出 {hit} 帧, 平均 {summary[-1]['mean_ms']} ms/帧")
+
+    if not rows:
+        print("没有可运行的模型，请检查模型权重是否存在。")
+        return 2
 
     with (args.out / "detections.csv").open("w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

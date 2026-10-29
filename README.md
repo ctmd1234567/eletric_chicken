@@ -58,6 +58,8 @@ python -m venv .venv
 
 自行准备一张图片 `samples/test.jpg` 或图片目录 `samples/images/` 后，运行：
 
+也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。默认运行三个模型并保存有检测框的图片。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
+
 ```powershell
 # 在首张 GPU 上验证三个模型
 .\.venv\Scripts\python.exe scripts/verify_models.py --image samples/test.jpg --device 0 --json reports/verify/infer_check.json
@@ -69,7 +71,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe scripts/compare_models.py --source samples/images --device 0 --save-images
 ```
 
-`--device 0` 指定首张 GPU；`--device cpu` 使用 CPU。结果默认保存在素材旁的 `<素材名>_results/`：例如测试图片放在 `samples/images/`，带框图片和 CSV 就保存在旁边的 `samples/images_results/`。可用 `--out` 指定其他目录。在 PyCharm 中选择本项目 `.venv\Scripts\python.exe` 作为解释器，再运行 `scripts/verify_cuda.py` 检查。
+`--device 0` 指定首张 GPU；`--device cpu` 使用 CPU。结果默认保存在 `samples/images_results/` 中，每次运行新建 `run_001/`、`run_002/` 等编号子目录。可用 `--out` 指定其他结果父目录。在 `run_models.py` 中可用 `SAVE_IMAGES` 控制是否保存带框图片，用 `SHOW_IMAGES` 控制是否逐张显示，显示时按任意键继续；CSV 仍会保存。图片目录也可以放常见视频，视频按 `VIDEO_STRIDE` 抽帧处理。长视频会占用较多内存。
 
 ## 目录说明
 
@@ -82,6 +84,7 @@ scripts/
   download_models.py  下载权重并校验大小和 SHA-256
   verify_models.py    权重加载与单图推理验证
   compare_models.py   多模型图片/视频比较
+  run_models.py       可在编辑器中直接运行的模型入口
   verify_cuda.py      CUDA 真实运算检查
 reports/              可提交的环境与验证摘要
 ```
