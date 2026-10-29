@@ -1,5 +1,5 @@
 # 本机 Python 3.13.14 / Windows CPU 环境已验证的直接依赖。
-# 如需 GPU，请先按 PyTorch 官方说明安装匹配驱动的 torch/torchvision。
+# 这是 CPU 模型比较环境记录。不要直接覆盖已有的 CUDA 环境；详见 read.md。
 torch==2.15.0
 torchvision==0.29.2
 ultralytics==8.4.192

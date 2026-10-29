@@ -26,7 +26,7 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 - Gymnasium 仿真环境、PPO/DQN 及已训练策略权重。
 - 飞线充电、消防通道堵塞检测器。现有模型只能识别烟或火，不能覆盖 PDF 中的全部目标。
 - ONVIF 控制、真实摄像机联调、告警服务、网页管理平台。
-- 本机 CUDA 可用性验证结果为 False，本次运行使用 CPU；没有开展 GPU 性能或实地预警验证。
+- 项目 `.venv` 当前安装 CPU 版 PyTorch，因此此前模型比较使用 CPU；本机显卡及驱动正常，PyCharm 登记的另一个解释器已通过 CUDA 运算验证（详见下文）。本项目尚未开展 GPU 模型性能或实地预警验证。
 
 ## 3. 模型下载检查
 
@@ -60,7 +60,7 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 
 ## 4. 本次运行结果
 
-环境为 Windows、Python 3.13.14、CPU，直接依赖版本见 [requirements.txt](requirements.txt)。本地 40 张 JPG 共 7,475,773 字节；未发现 `.part` 下载残留。没有发现本项目已下载的训练集、视频、全景或强化学习权重。
+模型比较使用项目 `.venv`：Windows、Python 3.13.14、PyTorch `2.15.0+cpu`，直接依赖版本见 [requirements.txt](requirements.txt)。该解释器的 `torch.version.cuda=None`、`torch.cuda.is_available()=False`，原因是安装了 CPU 构建，不能据此判断整台机器的 CUDA 不可用。本地 40 张 JPG 共 7,475,773 字节；未发现 `.part` 下载残留。没有发现本项目已下载的训练集、视频、全景或强化学习权重。
 
 在同一批 40 张图片上，`conf=0.10`，各模型按上面分辨率运行：
 
@@ -74,9 +74,31 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 
 ## 5. 安装与运行
 
+### PyCharm 与 CUDA：已核实的解释器差异
+
+2026-10-29 补充检查结果：
+
+- 显卡：NVIDIA GeForce RTX 5070 Laptop GPU；驱动：576.80；`nvidia-smi` 显示驱动支持 CUDA 12.9。
+- PyCharm 2026.2 的 SDK 配置登记了 `D:\Users\ctmd12334567\PycharmProjects\JupyterProject\.venv\Scripts\python.exe`。
+- 使用该解释器实际运行 [scripts/verify_cuda.py](scripts/verify_cuda.py)：PyTorch `2.8.0+cu129`、torchvision `0.23.0+cu129`、CUDA runtime `12.9`、`CUDA available=True`、GPU capability `(12, 0)`。
+- 已在 GPU 上执行 32×32 矩阵乘法并同步，结果 `32.0`，退出码为 0。CUDA 可用已由真实计算确认。
+- 该解释器没有安装 Ultralytics；这次确认的是 CUDA 运算，尚未在其中执行本项目 YOLO 推理。没有修改它或项目 `.venv` 的依赖。
+
+在 PyCharm 的项目 Python Interpreter 中选择上述已验证解释器，再运行 `scripts/verify_cuda.py` 即可复核。也可在 PowerShell 直接运行：
+
+```powershell
+& 'D:\Users\ctmd12334567\PycharmProjects\JupyterProject\.venv\Scripts\python.exe' scripts/verify_cuda.py
+```
+
+本次检查读取了 PyCharm 的 SDK 配置并直接执行同一个 Python 可执行文件，没有通过 PyCharm 界面点击运行，也没有修改 IDE 配置。项目当前没有 `.idea` 配置，不能认定它已选择该解释器。
+
+如果选择项目自己的 `D:\eletric_chicken\.venv\Scripts\python.exe`，当前仍会得到 False，需要先安装合适的 CUDA 版 PyTorch。`requirements.txt` 记录的是之前 CPU 比较环境的固定版本；直接安装会影响已有 GPU 环境的 torch/torchvision 版本，请勿直接用它覆盖已验证的 CUDA 环境。GPU 安装应使用 [PyTorch 官方安装说明](https://pytorch.org/get-started/locally/)选择匹配的构建，再运行检查脚本确认。
+
+### 创建项目环境与下载模型
+
 以下命令从仓库根目录执行。仓库不附带 `.venv`、权重和样例，克隆后需要创建环境、下载权重并自行准备图片。
 
-Windows PowerShell：
+Windows PowerShell（复现此前 CPU 模型比较环境）：
 
 ```powershell
 python -m venv .venv
