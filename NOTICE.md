@@ -1,6 +1,6 @@
 # 第三方模型与素材说明
 
-本仓库原有三个第三方训练权重，新增两个候选权重保存在本地 `models/fire_smoke/` 下，**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
+本仓库随 Git 分发三个第三方训练权重；其余两个候选权重（Pyronear Sensitive Detector、D-Fire YOLOv8n）仅保存在本地，需自行下载。所有文件均**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
 
 ## 模型来源
 
@@ -10,11 +10,11 @@
 | `models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt` | 同上 | `a914a2a036686cf09bac8efc738971fdc8f31a29` | AGPL-3.0 |
 | `models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt` | [HF: mfranzon/fire-smoke-yolov8](https://huggingface.co/mfranzon/fire-smoke-yolov8) | `f1c6426b069c1849cbf13b1ef5d2a260289286db` | AGPL-3.0 |
 
-2026-10-29 核对上述固定版本的模型卡，三者均标注 `agpl-3.0`。本地文件的 SHA-256 与 Hugging Face 返回的 LFS oid 逐字节一致，见 `scripts/download_models.py` 的 `MANIFEST`。
+2026-10-29 核对上表三者的模型卡，均标注 `agpl-3.0`。本地文件的 SHA-256 与 Hugging Face 返回的 LFS oid 逐字节一致，见 `scripts/download_models.py` 的 `MANIFEST`。
 
 FireSmockDetect 的代码与实验报告在 [GitHub](https://github.com/TianchenGuan/FireSmockDetect)，其中代码为 AGPL-3.0、报告与文档为 CC BY 4.0。Early Fire and Smoke 只发布了权重，模型卡描述的连续帧状态机没有公开实现。
 
-## 为什么本仓库也是 AGPL-3.0
+## 新增候选与 D-Fire 地址
 
 2026-10-29 新增候选来源：
 
@@ -28,7 +28,9 @@ D-Fire 的准确入口：
 - [原始数据集仓库](https://github.com/gaia-solutions-on-demand/DFireDataset)（本次不下载数据集）。
 - 数据集作者关联的 [Fire-Detection 模型仓库](https://github.com/pedbrgs/Fire-Detection)，README 提供 [YOLOv5s 权重](https://1drv.ms/u/c/c0bd25b6b048b01d/EeZYmpKPBppNr3lo8oaOqecB9GDj1dDvbogCJyegO0PY1Q?e=u76Iei) 和 [YOLOv5l 权重](https://1drv.ms/u/c/c0bd25b6b048b01d/ERy9-UpeDeRHkEb_eqPeC7EBdblsWLwujJ1BlssUWfz_Lg?e=e71j1u)。本机访问作者网盘连接失败，旧 Google Drive 脚本地址返回 404；不能将本次下载的第三方 YOLOv8n 冒充作者原始权重。
 
-三个权重都是 Ultralytics YOLO11 / YOLOv8 的微调产物，上游以 AGPL-3.0 发布。AGPL-3.0 允许原样再分发，但要求衍生作品整体同样以 AGPL-3.0 授权并提供对应源码，因此本仓库的脚本与文档统一采用 AGPL-3.0（全文见 `LICENSE`）。
+## 为什么本仓库也是 AGPL-3.0
+
+五个候选权重都是 Ultralytics YOLO11 / YOLOv8 的微调产物，上游以 AGPL-3.0 发布。AGPL-3.0 允许原样再分发，但要求衍生作品整体同样以 AGPL-3.0 授权并提供对应源码，因此本仓库的脚本与文档统一采用 AGPL-3.0（全文见 `LICENSE`）。
 
 如果你把本仓库的推理能力以网络服务形式提供给他人，AGPL-3.0 第 13 条要求你向使用者提供完整源码。
 
@@ -41,4 +43,4 @@ D-Fire 的准确入口：
 
 ## 免责
 
-这两个模型是研究工具，不是经过认证的火灾报警装置——上游作者也明确这样声明。本仓库未在电动车车棚场景做过任何性能验证，不要把其中的模型直接当作生命安全保障设备部署。
+这些模型是研究工具，不是经过认证的火灾报警装置——上游作者也明确这样声明。本仓库未在电动车车棚场景做过任何性能验证，不要把其中的模型直接当作生命安全保障设备部署。

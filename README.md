@@ -62,7 +62,9 @@ python -m venv .venv
 
 自行准备一张图片 `samples/test.jpg` 或图片目录 `samples/images/` 后，运行：
 
-也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。默认运行全部候选模型并保存有检测框的图片。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
+也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。默认运行原有三个候选模型并保存有检测框的图片。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
+
+比较新增候选与原有 YOLO11m 时，可设置 `MODELS = ["firesmockdetect_y11m", "pyronear_sensitive", "dfire_yolov8n"]`。新候选已下载并在本机 GPU 验证，车棚薄烟效果仍待测，不能宣称比原有模型更好。D-Fire 的数据集、作者原始模型及已下载第三方模型的区别见 [NOTICE.md](NOTICE.md)。
 
 ```powershell
 # 在首张 GPU 上验证候选模型
