@@ -1,6 +1,6 @@
 # 第三方模型与素材说明
 
-本仓库随 Git 分发三个第三方训练权重；其余两个候选权重（Pyronear Sensitive Detector、D-Fire YOLOv8n）仅保存在本地，需自行下载。所有文件均**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
+本仓库随 Git 分发三个第三方训练权重；其余候选权重（Pyronear Tenacious Tiger、D-Fire YOLOv8n、FASDD_CV YOLO26n、Safety Detection、LwST-FSD）仅保存在本地，需自行下载。所有文件均**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
 
 ## 模型来源
 
@@ -18,10 +18,13 @@ FireSmockDetect 的代码与实验报告在 [GitHub](https://github.com/Tianchen
 
 2026-10-29 新增候选来源：
 
-- `models/fire_smoke/pyronear_sensitive/best.pt`：Pyronear 官方 [yolo11s_sensitive-detector](https://huggingface.co/pyronear/yolo11s_sensitive-detector)，固定 revision `3df695158beed0a34e2f5a48245773fd9855ddd6`，19,225,626 字节，SHA-256 `a9bfa11c559e4b221c43bb24a0ec0857bc75ec653283ba6146aef44c088da51a`。该版本模型卡及 LICENSE 标注 AGPL-3.0。用途为早期野火烟雾检测；上游训练清单使用 `pyronear/pyro-dataset` 的 `v4.0.0-corrected`，并排除背景图。原始类别名为 `item`，本项目仅在内存中按上游任务语义显示为 `smoke`，不修改文件。
+- `models/fire_smoke/pyronear_sensitive/best.pt`：现为 Pyronear 官方 [yolov11s / Tenacious Tiger v8.3.0](https://huggingface.co/pyronear/yolov11s)，固定 revision `de398b5192b2c1d5f8963aef56bf8df1f13c159e`，19,225,626 字节，SHA-256 `c4b5b846b957cef2465c4f02f657442ec05151b1c3f95cb2e5702c2aa25bc848`。固定版本模型卡及 LICENSE 标注 AGPL-3.0。仍为 YOLO11s、1024 输入、早期野火烟雾检测；原始类别 `item` 仅在内存中显示为 `smoke`。保留旧目录名/选项名用于兼容，旧 Sensitive Detector v1.1.0 已被替换。
 - `models/fire_smoke/dfire_yolov8n/best.pt`：[rabahdev/fire-smoke-yolov8n](https://huggingface.co/rabahdev/fire-smoke-yolov8n)，固定 revision `13017fe8af477c25f5298d168e2dfede4b000753`，6,229,802 字节，SHA-256 `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`，模型卡标注 AGPL-3.0。由第三方在 D-Fire 上训练，类别为 `0=smoke, 1=fire`；不是 D-Fire 数据集作者的 YOLOv5 权重。
 
-两者均从固定 revision 的 Hugging Face 镜像下载，大小及 SHA-256 与仓库元数据一致。两者的车棚薄烟召回率和误报率均待测。
+- `models/fire_smoke/fasdd_yolo26n/best.pt`：[seawsurf/fire_yolo](https://huggingface.co/seawsurf/fire_yolo)（旧地址 `fire_smoke_detection_box` 已重定向），固定 revision `9403f231bab33e0ea4048424ff64023936957ba5`，上游文件 `weights/best.pt`，5,377,541 字节，SHA-256 `d2b0be214f45fa01d2044b960c3cb4da4bf65c06a89cf0a1967b0d40e8db4b98`。FASDD_CV 训练的 YOLO26n，640 输入，权重类别为 `0=fire, 1=smoke`。上游模型卡标注 CC BY 4.0；该声明与 Ultralytics 基础模型许可的关系尚未核清，仅本地保存。
+- `models/fire_smoke/safety_yolo26/yolo_smoke_fire.pt`：[e1250/safety_detection](https://huggingface.co/e1250/safety_detection)，固定 revision `f2049aa749dcc844e406d2507ffa3b683ce83aac`，15,735,298 字节，SHA-256 `cd2c8c1108b29589d77d4a21cc6e5f111c7586b225e2d8668fda50d791a2cbea`。模型卡称使用 Home Fire Dataset；checkpoint 与 args.yaml 均为 YOLO26n、640 输入。**上游未声明权重许可**，仅作为本地展示/待核实候选，不作为选型决策依据或随库分发。checkpoint 的类别为 `0=smoke, 1=fire`，与模型卡相反；代码保留 checkpoint 映射，实际标签语义仍需核实。
+
+四者均从固定 revision 的 Hugging Face 镜像下载，大小及 SHA-256 与仓库元数据一致。车棚薄烟召回率和误报率均待测。旧 Pyronear v1.1.0 的固定来源为 `pyronear/yolo11s_sensitive-detector@3df695158beed0a34e2f5a48245773fd9855ddd6`，旧哈希 `a9bfa11c559e4b221c43bb24a0ec0857bc75ec653283ba6146aef44c088da51a`；历史报告中的 16/76 属于旧权重，不能记在新版名下。
 
 D-Fire 的准确入口：
 
@@ -30,11 +33,13 @@ D-Fire 的准确入口：
 
 ## 为什么本仓库也是 AGPL-3.0
 
-五个候选权重都是 Ultralytics YOLO11 / YOLOv8 的微调产物，上游以 AGPL-3.0 发布。AGPL-3.0 允许原样再分发，但要求衍生作品整体同样以 AGPL-3.0 授权并提供对应源码，因此本仓库的脚本与文档统一采用 AGPL-3.0（全文见 `LICENSE`）。
+本仓库的脚本、文档及随库分发的三个权重采用 AGPL-3.0（全文见 `LICENSE`）。本地 Pyronear 和 D-Fire 候选同样由上游标注 AGPL-3.0。新增两个 YOLO26 候选的许可问题单独列于上文，不应把仓库许可证视为替上游授权。
 
 如果你把本仓库的推理能力以网络服务形式提供给他人，AGPL-3.0 第 13 条要求你向使用者提供完整源码。
 
 ## 数据集与素材
+
+- LwST-FSD：作者 [WCUSTC/LwST-FSD](https://github.com/WCUSTC/LwST-FSD)，固定源码 revision `af3ed8ac9686a607ec2330275fbb95cf8d1f910d`。作者公开 [FIgLib 五帧模型分享](https://pan.ustc.edu.cn/share/index/5b015f2c73e24fd48b82) 的 `epoch_10.pth` 为 141,991,741 字节；本次从作者地址下载的 SHA-256 为 `6ac5ca325d59f1bb48a8f63750ba1efd49b53cc5b34659395e8edf14ad8b3add`。**上游未提供独立摘要/签名，不能称为官方 LFS 哈希验证**；本项目固定该摘要以检测后续漂移。仓库未声明明确项目许可，权重许可未核清，仅限本地演示/复现，不随 Git 分发，不作为车棚选型结论依据。权重位于 `models/fire_smoke/lwst_fsd/`，作者源码按固定版本和 SHA-256 下载至被忽略的 `samples/lwst_fsd/upstream/`，不复制到本仓库分发源码中。推理适配器保留原始 TSM/PTA/CSP/YOLOX 前向层，替代训练框架中的标准 Conv/BN/SiLU 包装及训练日志反序列化，不训练、不重新导出或改写权重。FIgLib 数据集未下载。
 
 - 训练数据（pyro-sdis、D-Fire、Domestic Fire and Smoke）**不随本仓库分发**，需从原始出处获取，许可归各自作者。
 - FIgLib / HPWREN 为 CC BY-NC-ND，上游只用于回放评测，从未参与训练，本仓库也不分发。

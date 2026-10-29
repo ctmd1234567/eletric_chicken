@@ -27,13 +27,16 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from download_models import MANIFEST, sha256_of  # noqa: E402
 
-# 每个权重官方声明的工作分辨率（来自模型卡）
+# 每个权重的原生分辨率（来自上游模型卡或 args.yaml，并与 checkpoint 核对）
 NATIVE_IMGSZ = {
     "v5bA_y11m_best.pt": 1280,
     "expB_y11s_deployed.pt": 1280,
     "fire_smoke_yolov8.pt": 640,
     "models/fire_smoke/pyronear_sensitive/best.pt": 1024,
     "models/fire_smoke/dfire_yolov8n/best.pt": 640,
+    "models/fire_smoke/fasdd_yolo26n/best.pt": 640,
+    "models/fire_smoke/safety_yolo26/yolo_smoke_fire.pt": 640,
+    "models/fire_smoke/lwst_fsd/epoch_10.pth": 1024,
 }
 
 
@@ -42,12 +45,19 @@ def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
 
     rec: dict = {"file": str(path.relative_to(ROOT)).replace("\\", "/"), "load": "failed"}
     t0 = time.perf_counter()
-    model = YOLO(str(path))
+    if path.parent.name == 'lwst_fsd':
+        from lwst_backend import LwSTDetector
+        model = LwSTDetector(path)
+    else:
+        model = YOLO(str(path))
     rec["load"] = "ok"
     rec["load_seconds"] = round(time.perf_counter() - t0, 3)
     rec["task"] = getattr(model, "task", None)
     rec["checkpoint_classes"] = dict(model.names)
-    if path.relative_to(ROOT).as_posix() == "models/fire_smoke/pyronear_sensitive/best.pt":
+    rec["checkpoint_ultralytics"] = model.ckpt.get("version")
+    rec["end2end"] = bool(getattr(model.model, "end2end", False))
+    if (path.relative_to(ROOT).as_posix() == "models/fire_smoke/pyronear_sensitive/best.pt"
+            and model.names == {0: "item"}):
         model.model.names = {0: "smoke"}
     rec["classes"] = getattr(model, "names", None)
     try:
@@ -57,6 +67,7 @@ def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
     # 训练时的 imgsz 记录在 ckpt 的 train_args 里，缺省则用模型卡声明值
     try:
         args = model.ckpt.get("train_args", {}) or {}
+        rec["train_model"] = args.get("model")
         rec["train_imgsz"] = args.get("imgsz")
         rec["train_data"] = args.get("data")
     except Exception:
@@ -66,9 +77,18 @@ def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
 
     if image is not None:
         imgsz = rec["native_imgsz"] or 640
-        iou = 0.01 if relative_path == "models/fire_smoke/pyronear_sensitive/best.pt" else 0.7
+        is_lwst = path.parent.name == 'lwst_fsd'
+        iou = .65 if is_lwst else .01 if relative_path == "models/fire_smoke/pyronear_sensitive/best.pt" else .7
         t1 = time.perf_counter()
-        res = model.predict(str(image), imgsz=imgsz, conf=0.10, iou=iou, device=device, verbose=False)
+        if is_lwst:
+            import cv2
+            frame = cv2.imread(str(image))
+            if frame is None:
+                raise ValueError(f'无法读取测试图片: {image.name}')
+            res = model.predict(frame, imgsz=imgsz, conf=.10, iou=iou, rect=False, device=device)
+            rec['temporal_test'] = 'single-image repeated five times; load/inference check only'
+        else:
+            res = model.predict(str(image), imgsz=imgsz, conf=0.10, iou=iou, device=device, verbose=False)
         rec["infer_seconds"] = round(time.perf_counter() - t1, 3)
         r = res[0]
         rec["infer_imgsz"] = imgsz
@@ -110,7 +130,8 @@ def main() -> int:
         hash_ok = digest == entry["sha256"]
         print(f"  size   : {path.stat().st_size} bytes (期望 {entry['size']})")
         print(f"  sha256 : {digest}")
-        print(f"  一致性 : {'与官方一致' if hash_ok else '不一致！文件可能损坏或被替换'}")
+        hash_source = '与作者公开文件的固定摘要一致' if entry.get('provider') == 'ustc_share' else '与官方一致'
+        print(f"  一致性 : {hash_source if hash_ok else '不一致！文件可能损坏或被替换'}")
 
         try:
             rec = inspect(path, args.image, args.device)

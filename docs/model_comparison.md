@@ -1,8 +1,12 @@
 # 模型对比记录
 
+2026-10-30 新增本地候选 `lwst_fsd`：作者 [WCUSTC/LwST-FSD](https://github.com/WCUSTC/LwST-FSD) 的 FIgLib 五帧 checkpoint，11,578,642 参数，输入 1024，单类 smoke，NMS IoU=0.65。固定源码版本 `af3ed8ac9686a607ec2330275fbb95cf8d1f910d`；权重固定摘要见 `download_models.py` 的 MANIFEST。567 个参数/缓冲区严格匹配，已在 GPU 跑通单图重复五帧的加载检查；该检查不证明时序效果。完整视频链路和时序验证见本地运行记录及 `docs/video_baseline.md`。只有新视频入口支持它，原有 `run_models.py` 仍使用 YOLO 候选。模型、源码许可尚未核清，仅本地演示，不随 Git 分发；车棚薄烟召回、误报及预警延迟均待测。
+
 本文件是后续实验的**填写模板 + 已知事实**。规则很简单：**没测过的字段写"待测"，不写估计值。**
 
 核对日期：2026-10-29
+
+**当前版本说明**：`pyronear_sensitive` 选项及原路径已替换为 Tenacious Tiger v8.3.0；另新增 `fasdd_yolo26n`、`safety_yolo26`。当前详情与验证见第 8 节。第 3、4、7 节中的 Sensitive Detector v1.1.0 数字是替换前的历史记录，不能用于描述新版。
 
 ## 1. 对比表
 
@@ -52,7 +56,7 @@
 - **连续帧机制**：模型卡描述了一套状态机（clear → smoke present → early warning（烟雾增长）→ fire confirmed），设计目的是对持续增长的烟雾告警而不是单帧噪声。但作者 GitHub 账号与其所属组织下的公开仓库中**均未找到该实现**，需要自行实现。
 - **作者自己声明的局限**：视觉手段永远不是生命安全系统，这是研究工具，不能替代认证的烟感/火灾探测器。
 
-## 3. 本地候选模型（不随仓库分发）
+## 3. 历史：替换前的本地候选模型（不随仓库分发）
 
 以下两个权重已下载并校验，但**没有**纳入版本管理，需要用 `download_models.py` 自行获取。
 
@@ -110,10 +114,22 @@
 
 上游的 0.388 / 0.354 是在**野火**数据、**固定瞭望机位**、**匹配误报率**、**IoU≥0.4** 条件下测得的。电动车车棚在以下方面完全不同：目标尺度更小（远处车位）、遮挡更严重、干扰源更杂（水汽/反光）、背景更结构化（成排车辆）。把这两个数字写进申报书当作车棚场景的性能，属于错误引用。
 
-## 7. 本次候选下载与验证记录
+## 7. 历史：第一批候选下载与验证记录
 
 两个新权重均从固定 revision 下载，大小与 SHA-256 和上游仓库元数据一致。`scripts/download_models.py` 已登记清单；`run_models.py` 可使用 `pyronear_sensitive`、`dfire_yolov8n` 选择新模型。五个权重加载及单图 GPU 推理通过，原始记录保存在 `reports/verify/new_candidates_gpu.json`。Pyronear 的 checkpoint 原始类别名为 `item`，本项目仅在内存中显示为 `smoke`，权重字节未改变。
 
 本次同一批 76 张图片的运行记录位于 `reports/verify/new_candidates_comparison/run_001/`，五个模型结果设备均为 `cuda:0`。新增 Pyronear / D-Fire YOLOv8n 分别有 16 / 75 张输出框，平均耗时为 9.4 / 5.6 ms/帧（含首次运行开销，非严格基准）。IoU 排查记录位于 `reports/verify/pyronear_iou_check/run_001/`，Pyronear 使用 `iou=0.7` 时仍有 16 张输出框。
 
 现阶段保留 FireSmockDetect YOLO11m 作为薄烟对照，新增候选供同场景测试。上述有框数量不等于召回率；车棚薄烟召回、干扰源误报和首次有效告警时间全部待测。D-Fire 作者 YOLOv5 网盘在本机尚不可访问，新增 YOLOv8n 是明确标注 D-Fire 训练来源的第三方候选，不是作者原始权重；具体地址见 `NOTICE.md`。
+
+## 8. 当前：Pyronear 替换与两个 YOLO26 候选（2026-10-29）
+
+- `pyronear_sensitive`：兼容旧选项名，现为 [Pyronear Tenacious Tiger v8.3.0](https://huggingface.co/pyronear/yolov11s)，YOLO11s，9,428,179 参数，原生输入 1024。固定 revision `de398b5192b2c1d5f8963aef56bf8df1f13c159e`，SHA-256 `c4b5b846b957cef2465c4f02f657442ec05151b1c3f95cb2e5702c2aa25bc848`。仍为野火烟雾模型，AGPL-3.0；类别 `item` 仅在内存中显示为 `smoke`。
+- `fasdd_yolo26n`：[seawsurf/fire_yolo](https://huggingface.co/seawsurf/fire_yolo)，FASDD_CV 训练的 YOLO26n，2,504,580 参数，640 输入，`0=fire, 1=smoke`。固定 revision `9403f231bab33e0ea4048424ff64023936957ba5`，SHA-256 `d2b0be214f45fa01d2044b960c3cb4da4bf65c06a89cf0a1967b0d40e8db4b98`。作者报告 mAP50=0.772，非本地实测；模型卡标注 CC BY 4.0，基础模型许可关系待核清。
+- `safety_yolo26`：[e1250/safety_detection](https://huggingface.co/e1250/safety_detection)，作者称使用 Home Fire Dataset，实测架构 YOLO26n，2,504,580 参数，640 输入。固定 revision `f2049aa749dcc844e406d2507ffa3b683ce83aac`，SHA-256 `cd2c8c1108b29589d77d4a21cc6e5f111c7586b225e2d8668fda50d791a2cbea`。**许可未声明**，仅本地待核实。权重类别为 `0=smoke, 1=fire`，与模型卡的反向映射矛盾；代码不擅自交换类别。作者报告的 mAP50=0.930 尚未复现，标签语义待核实。
+
+两个新增 YOLO26 checkpoint 的实际检测头均为 `end2end=False`，当前走传统 NMS；不能仅凭 YOLO26 名称判断它们不使用 NMS。三个候选均使用本地 ultralytics 8.4.192 成功加载和 GPU 推理，没有升级依赖。七个当前权重的验证记录：`reports/verify/model_refresh_2026-10-29.json`。
+
+对同一批 RF100 smoke 76 张图片，使用 `conf=0.10`、Pyronear `1024 / iou=0.01 / rect=True`，两个 YOLO26 `640 / iou=0.7 / rect=True`，均为 `cuda:0`。三者有框图片数依次为 **33 / 74 / 72**。原始 CSV：`reports/verify/model_refresh_comparison/run_001/`。这些是链路检查，**不是召回率或准确率，也不能据此宣布选型胜出**；车棚薄烟、误报和报警时间仍待正式验证。
+
+入口 `run_models.py` 保留当前用户选择的 `firesmockdetect_y11s`、公共阈值 0.05 及 Pyronear 自定义 `1280 / rect=False`；上面的原生参数检查通过命令行显式指定，两者不要混淆。可将 MODELS 改为 `["pyronear_sensitive", "fasdd_yolo26n", "safety_yolo26"]` 同时运行三个候选。CSV 新增实际权重 SHA-256 与 end2end 状态，避免同名路径替换后混用新旧结果。

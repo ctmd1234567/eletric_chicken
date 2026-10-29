@@ -22,6 +22,7 @@ reports/comparison/*.jpg
 
 # ---- 模型权重：默认忽略，仅放行本仓库分发的三个第三方权重 ----
 *.pt
+*.pth
 *.onnx
 *.safetensors
 !models/fire_smoke/firesmockdetect/*.pt
