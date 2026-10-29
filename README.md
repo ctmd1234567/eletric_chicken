@@ -69,7 +69,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe scripts/compare_models.py --source samples/images --device 0 --save-images
 ```
 
-`--device 0` 指定首张 GPU；`--device cpu` 使用 CPU。比较输出位于 `reports/comparison/`。在 PyCharm 中选择本项目 `.venv\Scripts\python.exe` 作为解释器，再运行 `scripts/verify_cuda.py` 检查。
+`--device 0` 指定首张 GPU；`--device cpu` 使用 CPU。结果默认保存在素材旁的 `<素材名>_results/`：例如测试图片放在 `samples/images/`，带框图片和 CSV 就保存在旁边的 `samples/images_results/`。可用 `--out` 指定其他目录。在 PyCharm 中选择本项目 `.venv\Scripts\python.exe` 作为解释器，再运行 `scripts/verify_cuda.py` 检查。
 
 ## 目录说明
 

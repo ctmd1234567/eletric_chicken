@@ -10,9 +10,10 @@
     python scripts/compare_models.py --source samples/images --models early_fire_smoke
 
 产出:
-    reports/comparison/detections.csv   逐帧明细
-    reports/comparison/summary.csv      每个模型的汇总（平均延迟、有检出帧占比）
-    reports/comparison/*.jpg            可选，带框的截图（--save-images）
+    默认在素材旁创建 <素材名>_results/，例如 samples/images_results/
+    detections.csv   逐帧明细
+    summary.csv      每个模型的汇总（平均延迟、有检出帧占比）
+    *.jpg            可选，带框的截图（--save-images）
 
 注意:
     本脚本只负责"跑得动、跑多快、报了什么"，不做准确率判定。
@@ -71,7 +72,7 @@ def main() -> int:
     ap.add_argument("--models", nargs="*", choices=list(MODELS), default=list(MODELS))
     ap.add_argument("--conf", type=float, default=0.10)
     ap.add_argument("--stride", type=int, default=5, help="视频抽帧间隔")
-    ap.add_argument("--out", type=Path, default=ROOT / "reports" / "comparison")
+    ap.add_argument("--out", type=Path, help="结果目录；默认在素材旁创建 <素材名>_results")
     ap.add_argument("--save-images", action="store_true", help="保存带检测框的帧")
     ap.add_argument("--device", help="推理设备，如 0（首张 GPU）或 cpu；省略时自动选择")
     args = ap.parse_args()
@@ -82,6 +83,11 @@ def main() -> int:
         print(f"素材不存在: {args.source}")
         return 2
 
+    if args.out is None:
+        source = args.source.resolve()
+        name = source.name if source.is_dir() else source.stem
+        args.out = source.parent / f"{name}_results"
+
     frames = collect_frames(args.source, args.stride)
     if not frames:
         print("没有可处理的帧")
@@ -89,6 +95,7 @@ def main() -> int:
     print(f"素材: {args.source}  帧数: {len(frames)}")
 
     args.out.mkdir(parents=True, exist_ok=True)
+    print(f"结果目录: {args.out.resolve()}")
     rows, summary = [], []
 
     for name in args.models:

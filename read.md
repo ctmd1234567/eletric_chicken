@@ -151,7 +151,7 @@ python scripts/compare_models.py --source samples/carport.mp4 --stride 5
 python scripts/compare_models.py --source samples/images --models early_fire_smoke --save-images
 ```
 
-比较脚本输出 `reports/comparison/detections.csv`、`summary.csv` 和可选带框图片。视频路径必须真实存在，`--stride` 使用正整数。视频帧会先载入内存，长视频建议先裁短。当前只验证了 JPG 目录输入，视频和保存带框图片分支未执行。
+比较脚本默认在素材旁创建 `<素材名>_results/`，例如 `samples/images/` 的结果放在 `samples/images_results/`，包含 `detections.csv`、`summary.csv` 和可选带框图片（`--save-images`）。单张图片或视频使用文件主名，例如 `samples/test.jpg` 对应 `samples/test_results/`；可用 `--out` 指定其他目录。视频路径必须真实存在，`--stride` 使用正整数。视频帧会先载入内存，长视频建议先裁短。视频分支尚未验证。
 
 `--device 0` 强制使用首张 GPU，`--device cpu` 使用 CPU；省略时由 Ultralytics 自动选择。比较汇总及单图推理记录包含实际设备字段，可核对是否为 `cuda:0`。
 

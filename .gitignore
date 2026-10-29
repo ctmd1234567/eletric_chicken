@@ -18,6 +18,7 @@ reports/verify/
 outputs/
 predictions/
 reports/comparison/
+*_results/
 
 # ---- 可通过固定版本下载的模型权重 ----
 *.pt
