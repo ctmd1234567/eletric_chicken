@@ -1,18 +1,32 @@
 # 第三方模型与素材说明
 
-本仓库提供固定版本的模型下载与验证脚本，不随 Git 分发第三方权重、图片或视频。
+本仓库随 Git 分发三个第三方训练权重，原样转发，**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
 
 ## 模型来源
 
-- FireSmockDetect 的 `v5bA_y11m_best.pt` 和 `expB_y11s_deployed.pt`：
-  [模型仓库及模型卡](https://huggingface.co/TianchenGuan/FireSmockDetect-models/tree/a914a2a036686cf09bac8efc738971fdc8f31a29)，revision `a914a2a036686cf09bac8efc738971fdc8f31a29`；[上游代码](https://github.com/TianchenGuan/FireSmockDetect)。
-- Early Fire and Smoke 的 `fire_smoke_yolov8.pt`：
-  [模型仓库及模型卡](https://huggingface.co/mfranzon/fire-smoke-yolov8/tree/f1c6426b069c1849cbf13b1ef5d2a260289286db)，revision `f1c6426b069c1849cbf13b1ef5d2a260289286db`。
+| 权重 | 上游仓库 | revision | 许可 |
+|---|---|---|---|
+| `models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt` | [HF: TianchenGuan/FireSmockDetect-models](https://huggingface.co/TianchenGuan/FireSmockDetect-models) | `a914a2a036686cf09bac8efc738971fdc8f31a29` | AGPL-3.0 |
+| `models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt` | 同上 | `a914a2a036686cf09bac8efc738971fdc8f31a29` | AGPL-3.0 |
+| `models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt` | [HF: mfranzon/fire-smoke-yolov8](https://huggingface.co/mfranzon/fire-smoke-yolov8) | `f1c6426b069c1849cbf13b1ef5d2a260289286db` | AGPL-3.0 |
 
-2026-10-29 核对上述固定版本模型卡，两者均标注 `agpl-3.0`。使用、修改和分发时应查阅对应上游许可及条款；本说明不是替代许可证，也不额外授权。
+2026-10-29 核对上述固定版本的模型卡，三者均标注 `agpl-3.0`。本地文件的 SHA-256 与 Hugging Face 返回的 LFS oid 逐字节一致，见 `scripts/download_models.py` 的 `MANIFEST`。
 
-## 软件和数据
+FireSmockDetect 的代码与实验报告在 [GitHub](https://github.com/TianchenGuan/FireSmockDetect)，其中代码为 AGPL-3.0、报告与文档为 CC BY 4.0。Early Fire and Smoke 只发布了权重，模型卡描述的连续帧状态机没有公开实现。
 
-Ultralytics、PyTorch、OpenCV 等依赖遵循各自许可证。训练数据和测试素材的许可独立于模型许可。
+## 为什么本仓库也是 AGPL-3.0
 
-本地 `samples/rf100_smoke/images/` 有 40 张 JPG，但没有随附完整来源及许可记录，也没有标签，因此仅用于本次本机运行检查，不随仓库上传，不作为正式评测集。本仓库未将第三方模型的研究指标作为本项目成绩。
+三个权重都是 Ultralytics YOLO11 / YOLOv8 的微调产物，上游以 AGPL-3.0 发布。AGPL-3.0 允许原样再分发，但要求衍生作品整体同样以 AGPL-3.0 授权并提供对应源码，因此本仓库的脚本与文档统一采用 AGPL-3.0（全文见 `LICENSE`）。
+
+如果你把本仓库的推理能力以网络服务形式提供给他人，AGPL-3.0 第 13 条要求你向使用者提供完整源码。
+
+## 数据集与素材
+
+- 训练数据（pyro-sdis、D-Fire、Domestic Fire and Smoke）**不随本仓库分发**，需从原始出处获取，许可归各自作者。
+- FIgLib / HPWREN 为 CC BY-NC-ND，上游只用于回放评测，从未参与训练，本仓库也不分发。
+- 本地 `samples/rf100_smoke/` 为 [RF100 smoke](https://universe.roboflow.com/roboflow-100/smoke-uvylj/dataset/2) 测试子集（CC BY 4.0），仅用于本机运行检查，已被 `.gitignore` 排除。
+- 本地 `video/` 为第三方新闻视频，版权不在本项目，已被 `.gitignore` 排除，不得公开分发。
+
+## 免责
+
+这两个模型是研究工具，不是经过认证的火灾报警装置——上游作者也明确这样声明。本仓库未在电动车车棚场景做过任何性能验证，不要把其中的模型直接当作生命安全保障设备部署。

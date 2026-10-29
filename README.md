@@ -6,7 +6,7 @@
 
 **当前进度：已完成三个候选模型的下载、完整性校验和推理验证，项目环境已切换为 NVIDIA GPU 版 PyTorch。强化学习、仿真环境、摄像机闭环和管理平台仍待开发。**
 
-[详细准备情况与核查记录](read.md) · [项目方案 PDF](电鸡哨兵-基于强化学习与yolo算法.pdf) · [第三方模型说明](NOTICE.md)
+[详细准备情况与核查记录](read.md) · [模型对比记录](docs/model_comparison.md) · [协作规范 AGENTS.md](AGENTS.md) · [项目方案 PDF](电鸡哨兵-基于强化学习与yolo算法.pdf) · [第三方模型说明](NOTICE.md)
 
 ## 核心思路
 
@@ -77,19 +77,25 @@ python -m venv .venv
 
 ```text
 README.md             项目概览与快速开始
+AGENTS.md             协作规范：环境坑、指标口径、提交与发布要求
 read.md               完整方案说明、下载检查与运行记录
 NOTICE.md             第三方模型来源及许可说明
+LICENSE               AGPL-3.0 全文
 requirements.txt      当前 GPU 环境的直接依赖
+docs/
+  model_comparison.md 模型对比表与证据缺口
+models/fire_smoke/    三个候选权重（AGPL-3.0，随仓库分发）
 scripts/
   download_models.py  下载权重并校验大小和 SHA-256
   verify_models.py    权重加载与单图推理验证
   compare_models.py   多模型图片/视频比较
   run_models.py       可在编辑器中直接运行的模型入口
   verify_cuda.py      CUDA 真实运算检查
+  fetch_bilibili.py   下载 B 站测试视频（仅本地使用）
 reports/              可提交的环境与验证摘要
 ```
 
-模型权重、虚拟环境、临时下载文件、样例图片及运行生成的图片不上传 GitHub。克隆后需要自行安装依赖、下载权重并准备素材。
+三个候选权重已随仓库提交（总计约 66 MB，单文件均小于 100 MB，无需 Git LFS），克隆后即可直接推理；也可以运行 `download_models.py` 重新获取并校验。虚拟环境、样例图片、测试视频及运行生成的图片不上传 GitHub。
 
 ## 后续开发
 
@@ -100,4 +106,4 @@ reports/              可提交的环境与验证摘要
 
 ## 使用边界
 
-本项目为研究原型，尚未验证真实场景下的早期告警性能。第三方权重的模型卡标注 AGPL-3.0，数据集许可独立；本仓库不重新分发权重或素材。具体来源与使用说明见 [NOTICE.md](NOTICE.md)。
+本项目为研究原型，尚未验证真实场景下的早期告警性能。三个第三方权重以 AGPL-3.0 原样分发（未修改字节），本仓库因此整体采用 AGPL-3.0；数据集与测试素材的许可独立，不随仓库分发。具体来源与使用说明见 [NOTICE.md](NOTICE.md)。

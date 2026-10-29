@@ -1,0 +1,4 @@
+﻿model,weights,device,imgsz,frames,frames_with_detection,detect_rate,mean_ms,p95_ms,fps_equiv
+firesmockdetect_y11m,models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt,cuda:0,1280,76,73,0.961,44.6,29.5,22.4
+firesmockdetect_y11s,models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt,cuda:0,1280,76,71,0.934,14.6,16.5,68.6
+early_fire_smoke,models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt,cuda:0,640,76,71,0.934,7.3,9.7,137.6

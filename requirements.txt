@@ -5,3 +5,6 @@ torchvision==0.23.0+cu129
 ultralytics==8.4.192
 opencv-python==5.0.0.93
 numpy==2.5.4
+# 必须固定在 0.3.8：0.4.x 移除了 dill.extend，会让 torch 2.8 直接导入失败。
+# ultralytics 加载老 checkpoint 时会自动装最新版 dill，装完需要回退。
+dill==0.3.8
