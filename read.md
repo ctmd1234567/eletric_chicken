@@ -2,6 +2,8 @@
 
 核查日期：2026-10-29（Asia/Shanghai）。本页依据项目 PDF、当前脚本和本次实际运行结果编写。
 
+2026-10-30 状态更新：已移除 `pyronear_sensitive`、`firesmockdetect_y11s`、`fasdd_yolo26n` 的登记、本地权重和专用参数，当前保留五个模型，见 `sentinel/models/catalog.py` 与 README。本文早期模型数量、路径与实验结果保留作历史记录，不表示当前运行配置。
+
 ## 1. 项目做什么
 
 [方案 PDF](电鸡哨兵-基于强化学习与yolo算法.pdf)提出：在电动自行车停放充电场所，用一台云台摄像机主动巡视，争取在明火出现前识别可疑白烟并告警。
@@ -151,7 +153,7 @@ python scripts/compare_models.py --source samples/carport.mp4 --stride 5
 python scripts/compare_models.py --source samples/images --models early_fire_smoke --save-images
 ```
 
-比较脚本默认在 `samples/images_results/` 中每次新建 `run_001/`、`run_002/` 等编号子目录，包含 `detections.csv`、`summary.csv` 和可选带框图片（`--save-images`）；可用 `--out` 指定其他结果父目录。`run_models.py` 提供保存与逐帧显示开关。目录可以包含图片和常见视频；`--stride` 使用正整数。视频帧会先载入内存，长视频建议先裁短。
+比较脚本默认在 `samples/images_results/` 中每次新建 `run_001/`、`run_002/` 等编号子目录，包含 `detections.csv`、`summary.csv` 和可选检测结果（`--save-images` 或 `--save-results`）。图片保存 JPG；视频通过 FFmpeg 的 libx264 编码为 H.264 / yuv420p MP4，无音轨，无框的视频帧也保留。文件完成编码后才以最终名称出现，避免打开未完成的 MP4。输出帧率为原帧率除以 `--stride`，保持近似原时长；`--stride 1` 逐帧检测并保留原帧率。可用 `--out` 指定其他结果父目录。`run_models.py` 的 `SAVE_IMAGES` 控制结果保存；`SHOW_IMAGES=True` 时图片逐张显示，视频处理完成后直接用系统播放器打开带框 MP4。关闭保存但开启视频显示时，使用临时 MP4 播放。目录可以包含图片和常见视频；`--stride` 使用正整数。视频抽帧会先载入内存，长视频建议先裁短。
 
 `--device 0` 强制使用首张 GPU，`--device cpu` 使用 CPU；省略时由 Ultralytics 自动选择。比较汇总及单图推理记录包含实际设备字段，可核对是否为 `cuda:0`。
 

@@ -16,6 +16,8 @@
 
 ## 2. 目录结构与职责
 
+2026-10-30 重构后，`scripts/` 只保留运行入口；实现位于 `sentinel/models/`、`sentinel/pipelines/`、`sentinel/media/`、`sentinel/evaluation/`，测试位于 `tests/`。按修改目的查阅 [docs/code_map.md](docs/code_map.md)。同日已移除 `pyronear_sensitive`、`firesmockdetect_y11s`、`fasdd_yolo26n` 的登记、本地权重和专用参数。当前保留 YOLO11m、Early Fire and Smoke、D-Fire、Safety YOLO26、LwST-FSD 五个模型，以 `sentinel/models/catalog.py` 和 `docs/model_comparison.md` 为准。下方模型清单、分发数量和五模型实测数据是早期历史记录，涉及已移除模型的描述不代表当前状态。
+
 ```text
 README.md                  项目概览、快速开始
 read.md                    完整方案说明与历史核查记录
@@ -62,7 +64,7 @@ datasets/                  数据集（不入库）
 
 前三个权重随仓库分发；`pyronear_sensitive` 与 `dfire_yolov8n` 是本地候选，**未**纳入版本管理（`.gitignore` 只放行前两个目录），需要时用 `download_models.py` 自行下载。
 
-五者的 SHA-256 与官方 LFS oid 一致（2026-10-29 核对），完整值见 `scripts/download_models.py` 的 `MANIFEST`。
+五者的 SHA-256 与官方 LFS oid 一致（2026-10-29 核对），完整值见 `sentinel/models/catalog.py` 的 `MODELS`。
 
 **两个 FireSmockDetect 权重不是两种不同算法**：都是 YOLO11 + 同一套训练配方（pyro-sdis + D-Fire），差别只在骨干规模（m / s）与训练轮次。`expB_y11s_deployed.pt` 是上游服务的生产默认，`v5bA_y11m_best.pt` 是冻结测试集上固定摄像头表现更好的重训版本。
 
@@ -130,7 +132,7 @@ python -m venv .venv
 
 - 数据集一律不入库。`datasets/`、`samples/`、`video/` 已在 `.gitignore` 中排除。
 - 权重按固定 revision 下载并校验 SHA-256，不手工改名、不重新导出、不修改权重字节。
-- 新增权重必须同时更新：`scripts/download_models.py` 的 `MANIFEST`、`NOTICE.md`、`docs/model_comparison.md`。
+- 新增权重必须同时更新：`sentinel/models/catalog.py` 的 `MODELS`、`NOTICE.md`、`docs/model_comparison.md`。
 - 数据集使用前先确认许可，并在 `NOTICE.md` 里登记；许可不明的数据集只能做展示，不能作为决策依据。
 - 第三方视频（如 B 站素材）仅限本地分析，**不得**提交到公开仓库。
 

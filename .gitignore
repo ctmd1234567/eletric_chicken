@@ -20,12 +20,13 @@ predictions/
 reports/comparison/*.jpg
 *_results/
 
-# ---- 模型权重：默认忽略，仅放行本仓库分发的三个第三方权重 ----
+# ---- 模型权重：默认忽略，仅放行本仓库分发的两个第三方权重 ----
 *.pt
+*.pth
 *.onnx
 *.safetensors
-!models/fire_smoke/firesmockdetect/*.pt
-!models/fire_smoke/early_fire_smoke/*.pt
+!models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt
+!models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt
 
 # ---- 数据（本仓库不分发数据集）----
 data/
