@@ -1,0 +1,108 @@
+{
+  "checked_date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "platform": "Windows",
+  "python": "3.13.14",
+  "device": "cpu",
+  "cuda_available": false,
+  "pip_check": "passed",
+  "model_bytes": 66082217,
+  "sample_images": 40,
+  "sample_bytes": 7475773,
+  "sample_labels_present": false,
+  "limitations": [
+    "Local samples have no labels or complete provenance record.",
+    "Detection frequency is not recall or accuracy.",
+    "Timing includes first-frame overhead; no dedicated warmup.",
+    "Fresh environment installation and model re-download were not tested."
+  ],
+  "models": [
+    {
+      "file": "models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt",
+      "load": "ok",
+      "load_seconds": 0.05,
+      "task": "detect",
+      "classes": {
+        "0": "smoke"
+      },
+      "params": 20053779,
+      "train_imgsz": 1280,
+      "native_imgsz": 1280,
+      "infer_seconds": 1.377,
+      "infer_imgsz": 1280,
+      "n_boxes": 1,
+      "sha256": "1b6cb82295767ae9d0d5c4fb94dffcaf17bbbafc0e3af001d3fe517015902298",
+      "sha256_match": true
+    },
+    {
+      "file": "models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt",
+      "load": "ok",
+      "load_seconds": 0.029,
+      "task": "detect",
+      "classes": {
+        "0": "smoke"
+      },
+      "params": 9428179,
+      "train_imgsz": 1280,
+      "native_imgsz": 1280,
+      "infer_seconds": 0.154,
+      "infer_imgsz": 1280,
+      "n_boxes": 2,
+      "sha256": "cc56224c84092e1e374cee1b3ce317f17f7f80e7945bc6c9a3a24a083321ff0e",
+      "sha256_match": true
+    },
+    {
+      "file": "models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt",
+      "load": "ok",
+      "load_seconds": 0.013,
+      "task": "detect",
+      "classes": {
+        "0": "fire",
+        "1": "smoke"
+      },
+      "params": 3011238,
+      "train_imgsz": 640,
+      "native_imgsz": 640,
+      "infer_seconds": 0.047,
+      "infer_imgsz": 640,
+      "n_boxes": 0,
+      "sha256": "ac0a10257b2bc1f20c9d957f8adeeb61dd6140322fc19d0b4a116cb491776d16",
+      "sha256_match": true
+    }
+  ],
+  "comparison": [
+    {
+      "model": "firesmockdetect_y11m",
+      "weights": "models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt",
+      "imgsz": "1280",
+      "frames": "40",
+      "frames_with_detection": "37",
+      "detect_rate": "0.925",
+      "mean_ms": "324.8",
+      "p95_ms": "327.4",
+      "fps_equiv": "3.1"
+    },
+    {
+      "model": "firesmockdetect_y11s",
+      "weights": "models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt",
+      "imgsz": "1280",
+      "frames": "40",
+      "frames_with_detection": "35",
+      "detect_rate": "0.875",
+      "mean_ms": "104.5",
+      "p95_ms": "118.6",
+      "fps_equiv": "9.6"
+    },
+    {
+      "model": "early_fire_smoke",
+      "weights": "models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt",
+      "imgsz": "640",
+      "frames": "40",
+      "frames_with_detection": "36",
+      "detect_rate": "0.9",
+      "mean_ms": "16.2",
+      "p95_ms": "20.8",
+      "fps_equiv": "61.8"
+    }
+  ]
+}

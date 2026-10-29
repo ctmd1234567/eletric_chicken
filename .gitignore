@@ -1,0 +1,46 @@
+# ---- Python ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- 临时下载与中间产物 ----
+.tmp_hf/
+*.tmp
+*.part
+*.download
+
+# ---- 运行产物 ----
+runs/
+reports/verify/
+outputs/
+predictions/
+reports/comparison/
+
+# ---- 可通过固定版本下载的模型权重 ----
+*.pt
+*.onnx
+*.safetensors
+
+# ---- 数据（本仓库不分发数据集）----
+data/
+datasets/
+
+# ---- 本地测试素材（版权/隐私原因不入库）----
+samples/
+*.mp4
+*.avi
+*.mov
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# ---- 凭据 ----
+.env
+*.token
+.hf_token
