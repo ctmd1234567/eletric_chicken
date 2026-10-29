@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""从 Hugging Face 下载本项目的两个候选烟雾检测模型权重，并做 SHA-256 校验。
+"""从 Hugging Face 下载本项目的候选烟火检测模型权重，并做 SHA-256 校验。
 
 用法:
     python scripts/download_models.py                  # 默认走 hf-mirror.com 镜像
@@ -55,6 +55,24 @@ MANIFEST = [
         "size": 6262051,
         "sha256": "ac0a10257b2bc1f20c9d957f8adeeb61dd6140322fc19d0b4a116cb491776d16",
         "dest": "models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt",
+    },
+    {
+        "group": "pyronear_sensitive",
+        "repo": "pyronear/yolo11s_sensitive-detector",
+        "revision": "3df695158beed0a34e2f5a48245773fd9855ddd6",
+        "file": "best.pt",
+        "size": 19225626,
+        "sha256": "a9bfa11c559e4b221c43bb24a0ec0857bc75ec653283ba6146aef44c088da51a",
+        "dest": "models/fire_smoke/pyronear_sensitive/best.pt",
+    },
+    {
+        "group": "dfire_yolov8n",
+        "repo": "rabahdev/fire-smoke-yolov8n",
+        "revision": "13017fe8af477c25f5298d168e2dfede4b000753",
+        "file": "best.pt",
+        "size": 6229802,
+        "sha256": "b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f",
+        "dest": "models/fire_smoke/dfire_yolov8n/best.pt",
     },
 ]
 
@@ -121,7 +139,7 @@ def download(entry: dict, endpoint: str, force: bool = False) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--endpoint", default=os.environ.get("HF_ENDPOINT", DEFAULT_ENDPOINT))
-    ap.add_argument("--only", choices=["firesmockdetect", "early_fire_smoke"], help="只处理某一组")
+    ap.add_argument("--only", choices=sorted({e["group"] for e in MANIFEST}), help="只处理某一组")
     ap.add_argument("--check", action="store_true", help="只校验，不下载")
     ap.add_argument("--force", action="store_true", help="已存在也重新下载")
     args = ap.parse_args()

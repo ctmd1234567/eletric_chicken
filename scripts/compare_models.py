@@ -33,7 +33,12 @@ MODELS = {
     "firesmockdetect_y11m": ("models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt", 1280),
     "firesmockdetect_y11s": ("models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt", 1280),
     "early_fire_smoke": ("models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt", 640),
+    "pyronear_sensitive": ("models/fire_smoke/pyronear_sensitive/best.pt", 1024),
+    "dfire_yolov8n": ("models/fire_smoke/dfire_yolov8n/best.pt", 640),
 }
+
+# Pyronear 模型卡的推荐 NMS IoU；其他模型保留 Ultralytics 默认值。
+NMS_IOU = {"pyronear_sensitive": 0.01}
 
 IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 VIDEO_EXT = {".mp4", ".avi", ".mov", ".mkv", ".m4v", ".wmv"}
@@ -120,10 +125,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[跳过] {name}: 权重不存在 {rel}")
             continue
         model = YOLO(str(path))
+        if name == "pyronear_sensitive":
+            # 上游单类烟雾 checkpoint 的名称是 item；只修正显示，不修改权重。
+            model.model.names = {0: "smoke"}
+        iou = NMS_IOU.get(name, 0.7)
         times, hit = [], 0
         for label, idx, frame, ref in frames:
             t0 = time.perf_counter()
-            res = model.predict(frame, imgsz=imgsz, conf=args.conf, device=args.device, verbose=False)
+            res = model.predict(frame, imgsz=imgsz, conf=args.conf, iou=iou, device=args.device, verbose=False)
             ms = (time.perf_counter() - t0) * 1000
             times.append(ms)
             r = res[0]
@@ -137,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
                     "frame_index": idx,
                     "imgsz": imgsz,
                     "conf_threshold": args.conf,
+                    "iou_threshold": iou,
                     "n_boxes": len(confs),
                     "max_conf": round(max(confs), 4) if confs else "",
                     "classes": "|".join(sorted(set(clss))),
@@ -162,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
                 "weights": rel,
                 "device": str(res[0].boxes.data.device),
                 "imgsz": imgsz,
+                "iou_threshold": iou,
                 "frames": len(times),
                 "frames_with_detection": hit,
                 "detect_rate": round(hit / len(times), 3),

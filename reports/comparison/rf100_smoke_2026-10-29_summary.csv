@@ -1,4 +1,6 @@
-﻿model,weights,device,imgsz,frames,frames_with_detection,detect_rate,mean_ms,p95_ms,fps_equiv
-firesmockdetect_y11m,models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt,cuda:0,1280,76,73,0.961,44.6,29.5,22.4
-firesmockdetect_y11s,models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt,cuda:0,1280,76,71,0.934,14.6,16.5,68.6
-early_fire_smoke,models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt,cuda:0,640,76,71,0.934,7.3,9.7,137.6
+﻿model,weights,device,imgsz,iou_threshold,frames,frames_with_detection,detect_rate,mean_ms,p95_ms,fps_equiv
+firesmockdetect_y11m,models/fire_smoke/firesmockdetect/v5bA_y11m_best.pt,cuda:0,1280,0.7,76,73,0.961,45.6,32.5,21.9
+firesmockdetect_y11s,models/fire_smoke/firesmockdetect/expB_y11s_deployed.pt,cuda:0,1280,0.7,76,71,0.934,13.0,13.5,77.1
+early_fire_smoke,models/fire_smoke/early_fire_smoke/fire_smoke_yolov8.pt,cuda:0,640,0.7,76,71,0.934,6.5,7.1,154.7
+pyronear_sensitive,models/fire_smoke/pyronear_sensitive/best.pt,cuda:0,1024,0.01,76,16,0.211,9.8,10.9,102.2
+dfire_yolov8n,models/fire_smoke/dfire_yolov8n/best.pt,cuda:0,640,0.7,76,75,0.987,5.7,6.8,176.9

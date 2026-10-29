@@ -1,6 +1,6 @@
 # 第三方模型与素材说明
 
-本仓库随 Git 分发三个第三方训练权重，原样转发，**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
+本仓库原有三个第三方训练权重，新增两个候选权重保存在本地 `models/fire_smoke/` 下，**未修改任何权重字节**。图片、视频与数据集不随仓库分发。
 
 ## 模型来源
 
@@ -15,6 +15,18 @@
 FireSmockDetect 的代码与实验报告在 [GitHub](https://github.com/TianchenGuan/FireSmockDetect)，其中代码为 AGPL-3.0、报告与文档为 CC BY 4.0。Early Fire and Smoke 只发布了权重，模型卡描述的连续帧状态机没有公开实现。
 
 ## 为什么本仓库也是 AGPL-3.0
+
+2026-10-29 新增候选来源：
+
+- `models/fire_smoke/pyronear_sensitive/best.pt`：Pyronear 官方 [yolo11s_sensitive-detector](https://huggingface.co/pyronear/yolo11s_sensitive-detector)，固定 revision `3df695158beed0a34e2f5a48245773fd9855ddd6`，19,225,626 字节，SHA-256 `a9bfa11c559e4b221c43bb24a0ec0857bc75ec653283ba6146aef44c088da51a`。该版本模型卡及 LICENSE 标注 AGPL-3.0。用途为早期野火烟雾检测；上游训练清单使用 `pyronear/pyro-dataset` 的 `v4.0.0-corrected`，并排除背景图。原始类别名为 `item`，本项目仅在内存中按上游任务语义显示为 `smoke`，不修改文件。
+- `models/fire_smoke/dfire_yolov8n/best.pt`：[rabahdev/fire-smoke-yolov8n](https://huggingface.co/rabahdev/fire-smoke-yolov8n)，固定 revision `13017fe8af477c25f5298d168e2dfede4b000753`，6,229,802 字节，SHA-256 `b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f`，模型卡标注 AGPL-3.0。由第三方在 D-Fire 上训练，类别为 `0=smoke, 1=fire`；不是 D-Fire 数据集作者的 YOLOv5 权重。
+
+两者均从固定 revision 的 Hugging Face 镜像下载，大小及 SHA-256 与仓库元数据一致。两者的车棚薄烟召回率和误报率均待测。
+
+D-Fire 的准确入口：
+
+- [原始数据集仓库](https://github.com/gaia-solutions-on-demand/DFireDataset)（本次不下载数据集）。
+- 数据集作者关联的 [Fire-Detection 模型仓库](https://github.com/pedbrgs/Fire-Detection)，README 提供 [YOLOv5s 权重](https://1drv.ms/u/c/c0bd25b6b048b01d/EeZYmpKPBppNr3lo8oaOqecB9GDj1dDvbogCJyegO0PY1Q?e=u76Iei) 和 [YOLOv5l 权重](https://1drv.ms/u/c/c0bd25b6b048b01d/ERy9-UpeDeRHkEb_eqPeC7EBdblsWLwujJ1BlssUWfz_Lg?e=e71j1u)。本机访问作者网盘连接失败，旧 Google Drive 脚本地址返回 404；不能将本次下载的第三方 YOLOv8n 冒充作者原始权重。
 
 三个权重都是 Ultralytics YOLO11 / YOLOv8 的微调产物，上游以 AGPL-3.0 发布。AGPL-3.0 允许原样再分发，但要求衍生作品整体同样以 AGPL-3.0 授权并提供对应源码，因此本仓库的脚本与文档统一采用 AGPL-3.0（全文见 `LICENSE`）。
 

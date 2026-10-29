@@ -4,7 +4,7 @@
 
 车棚里的车辆会互相遮挡，远处的少量白烟在固定监控中也可能只有很少的像素。本项目希望通过云台转动、变焦与可疑点复核，提高车位覆盖率，并缩短发现可疑烟雾的时间。
 
-**当前进度：已完成三个候选模型的下载、完整性校验和推理验证，项目环境已切换为 NVIDIA GPU 版 PyTorch。强化学习、仿真环境、摄像机闭环和管理平台仍待开发。**
+**当前进度：已完成五个候选模型的下载、完整性校验和推理验证，项目环境已切换为 NVIDIA GPU 版 PyTorch。强化学习、仿真环境、摄像机闭环和管理平台仍待开发。**
 
 [详细准备情况与核查记录](read.md) · [模型对比记录](docs/model_comparison.md) · [协作规范 AGENTS.md](AGENTS.md) · [项目方案 PDF](电鸡哨兵-基于强化学习与yolo算法.pdf) · [第三方模型说明](NOTICE.md)
 
@@ -25,15 +25,19 @@
 - **CUDA 检查：** 打印实际解释器、PyTorch/CUDA 版本及显卡，并执行真实 GPU 矩阵乘法。
 - **环境：** Windows、Python 3.13.14、PyTorch `2.8.0+cu129`、torchvision `0.23.0+cu129`，本机为 RTX 5070 Laptop GPU。
 
-本项目环境已通过 CUDA 矩阵运算、依赖检查及三个模型各 40 张图片的 GPU 推理验证，实际结果设备为 `cuda:0`，见 [GPU 验证记录](reports/gpu_check_2026-10-29.json)。
+本项目环境已通过 CUDA 矩阵运算、依赖检查及多个候选模型在 GPU 上的推理验证，实际结果设备为 `cuda:0`，见 [GPU 验证记录](reports/gpu_check_2026-10-29.json)。
 
-三个候选权重本地均已下载并通过 SHA-256 校验，总计约 66.08 MB：
+五个候选权重本地均已下载并通过 SHA-256 校验：
 
-- **YOLO11m / FireSmockDetect：** 约 40.58 MB，单类 `smoke`，1280 输入。
-- **YOLO11s / FireSmockDetect：** 约 19.24 MB，单类 `smoke`，1280 输入。
-- **YOLOv8n / Early Fire and Smoke：** 约 6.26 MB，`fire`、`smoke` 两类，640 输入。
+| 模型 | 大小 | 类别 | 输入 | 是否随仓库分发 |
+|---|---|---|---|---|
+| YOLO11m / FireSmockDetect | 40.58 MB | `smoke` | 1280 | 是 |
+| YOLO11s / FireSmockDetect | 19.24 MB | `smoke` | 1280 | 是 |
+| YOLOv8n / Early Fire and Smoke | 6.26 MB | `fire`, `smoke` | 640 | 是 |
+| YOLO11s / Pyronear Sensitive Detector | 19.23 MB | `item` | 1024 | 否，本地候选 |
+| YOLOv8n / D-Fire 微调 | 6.23 MB | `smoke`, `fire` | 640 | 否，本地候选 |
 
-这些是待评估的候选模型。野外烟雾与车棚白烟存在场景差异；当前也没有飞线充电、消防通道堵塞检测能力。40 张本地图片没有标签，只用于运行检查，“有检测框的比例”不等于准确率或召回率。
+后两个用 `download_models.py` 自行下载。这些是待评估的候选模型。野外烟雾与车棚白烟存在场景差异；当前也没有飞线充电、消防通道堵塞检测能力。本地的 RF100 图片只用于运行检查，"有检测框的比例"不等于准确率或召回率。
 
 ## 快速开始
 
@@ -58,13 +62,13 @@ python -m venv .venv
 
 自行准备一张图片 `samples/test.jpg` 或图片目录 `samples/images/` 后，运行：
 
-也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。默认运行三个模型并保存有检测框的图片。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
+也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。默认运行全部候选模型并保存有检测框的图片。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
 
 ```powershell
-# 在首张 GPU 上验证三个模型
+# 在首张 GPU 上验证候选模型
 .\.venv\Scripts\python.exe scripts/verify_models.py --image samples/test.jpg --device 0 --json reports/verify/infer_check.json
 
-# 比较三个模型，输出 CSV
+# 比较候选模型，输出 CSV
 .\.venv\Scripts\python.exe scripts/compare_models.py --source samples/images --device 0
 
 # 保存带框图片
@@ -84,7 +88,7 @@ LICENSE               AGPL-3.0 全文
 requirements.txt      当前 GPU 环境的直接依赖
 docs/
   model_comparison.md 模型对比表与证据缺口
-models/fire_smoke/    三个候选权重（AGPL-3.0，随仓库分发）
+models/fire_smoke/    候选权重（AGPL-3.0；前三个随仓库分发，后两个本地）
 scripts/
   download_models.py  下载权重并校验大小和 SHA-256
   verify_models.py    权重加载与单图推理验证
@@ -95,7 +99,7 @@ scripts/
 reports/              可提交的环境与验证摘要
 ```
 
-三个候选权重已随仓库提交（总计约 66 MB，单文件均小于 100 MB，无需 Git LFS），克隆后即可直接推理；也可以运行 `download_models.py` 重新获取并校验。虚拟环境、样例图片、测试视频及运行生成的图片不上传 GitHub。
+其中三个权重已随仓库提交（合计约 66 MB，单文件均小于 100 MB，无需 Git LFS），克隆后即可直接推理；也可以运行 `download_models.py` 重新获取并校验。虚拟环境、样例图片、测试视频及运行生成的图片不上传 GitHub。
 
 ## 后续开发
 
@@ -106,4 +110,4 @@ reports/              可提交的环境与验证摘要
 
 ## 使用边界
 
-本项目为研究原型，尚未验证真实场景下的早期告警性能。三个第三方权重以 AGPL-3.0 原样分发（未修改字节），本仓库因此整体采用 AGPL-3.0；数据集与测试素材的许可独立，不随仓库分发。具体来源与使用说明见 [NOTICE.md](NOTICE.md)。
+本项目为研究原型，尚未验证真实场景下的早期告警性能。第三方权重以 AGPL-3.0 原样分发（未修改字节），本仓库因此整体采用 AGPL-3.0；数据集与测试素材的许可独立，不随仓库分发。具体来源与使用说明见 [NOTICE.md](NOTICE.md)。

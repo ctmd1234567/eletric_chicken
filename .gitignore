@@ -48,3 +48,6 @@ desktop.ini
 .env
 *.token
 .hf_token
+
+# ---- 本地协作笔记，不公开 ----
+.workbuddy-ai/

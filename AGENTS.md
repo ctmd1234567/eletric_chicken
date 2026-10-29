@@ -50,13 +50,19 @@ datasets/                  数据集（不入库）
 | `v5bA_y11m_best.pt` | `models/fire_smoke/firesmockdetect/` | `smoke`（单类） | 1280 | 20,053,779 | AGPL-3.0 |
 | `expB_y11s_deployed.pt` | `models/fire_smoke/firesmockdetect/` | `smoke`（单类） | 1280 | 9,428,179 | AGPL-3.0 |
 | `fire_smoke_yolov8.pt` | `models/fire_smoke/early_fire_smoke/` | `fire`, `smoke` | 640 | 3,011,238 | AGPL-3.0 |
+| `best.pt` | `models/fire_smoke/pyronear_sensitive/` | `item`（单类，类名无语义） | 1024 | 9,428,179 | AGPL-3.0 |
+| `best.pt` | `models/fire_smoke/dfire_yolov8n/` | `smoke`, `fire` | 640 | 3,011,238 | AGPL-3.0 |
 
 上游来源：
 
 - FireSmockDetect：<https://huggingface.co/TianchenGuan/FireSmockDetect-models>，revision `a914a2a036686cf09bac8efc738971fdc8f31a29`；代码与报告 <https://github.com/TianchenGuan/FireSmockDetect>。
 - Early Fire and Smoke：<https://huggingface.co/mfranzon/fire-smoke-yolov8>，revision `f1c6426b069c1849cbf13b1ef5d2a260289286db`。
+- Pyronear Sensitive Detector：<https://huggingface.co/pyronear/yolo11s_sensitive-detector>，revision `3df695158beed0a34e2f5a48245773fd9855ddd6`（v1.1.0）；训练数据为 pyronear/pyro-dataset。
+- D-Fire YOLOv8n：<https://huggingface.co/rabahdev/fire-smoke-yolov8n>，revision `13017fe8af477c25f5298d168e2dfede4b000753`；D-Fire 微调，作者报告 test split mAP50 0.754。
 
-三者的 SHA-256 与官方 LFS oid 一致（2026-10-29 核对），完整值见 `scripts/download_models.py` 的 `MANIFEST`。
+前三个权重随仓库分发；`pyronear_sensitive` 与 `dfire_yolov8n` 是本地候选，**未**纳入版本管理（`.gitignore` 只放行前两个目录），需要时用 `download_models.py` 自行下载。
+
+五者的 SHA-256 与官方 LFS oid 一致（2026-10-29 核对），完整值见 `scripts/download_models.py` 的 `MANIFEST`。
 
 **两个 FireSmockDetect 权重不是两种不同算法**：都是 YOLO11 + 同一套训练配方（pyro-sdis + D-Fire），差别只在骨干规模（m / s）与训练轮次。`expB_y11s_deployed.pt` 是上游服务的生产默认，`v5bA_y11m_best.pt` 是冻结测试集上固定摄像头表现更好的重训版本。
 
@@ -104,7 +110,7 @@ python -m venv .venv
 ## 6. 怎么在同一批素材上比较
 
 1. 素材必须**完全一致**：同一目录、同一视频、同一抽帧间隔。
-2. 三个模型的输入分辨率不同（1280 / 1280 / 640），这是模型固有属性，**不要**为了"公平"强行统一——按各自原生分辨率跑，并把这个差异写进结论。
+2. 五个模型的输入分辨率不同（1280 / 1280 / 640 / 1024 / 640），NMS 的 `iou` 也不统一（`pyronear_sensitive` 上游推荐 `iou=0.01`，其余为默认 0.7）。这些都是模型固有属性，**不要**为了"公平"强行统一——按各自推荐配置跑，并把这个差异写进结论。
 3. 置信度阈值先统一用 `0.10`（`--conf`），再针对每个模型单独做阈值扫描；上游明确说明固定摄像头与航拍场景的阈值**不可互换**。
 4. 视频场景务必按帧记录，因为要算的是"首次有效报警时间"，不是单帧准确率。
 
@@ -152,8 +158,9 @@ python -m venv .venv
 
 **已核实：**
 
-- 三个权重可加载、可推理，SHA-256 与官方一致。
-- 在 RF100 `smoke` 测试子集（CC BY 4.0，76 张）上，三个模型分别有 73 / 71 / 71 张输出至少一个框，平均延迟 44.6 / 14.6 / 7.3 ms（`cuda:0`，含首次预热）。
+- 五个权重可加载、可推理，SHA-256 与官方一致。
+- 在 RF100 `smoke` 测试子集（CC BY 4.0，76 张）上，五个模型分别有 73 / 71 / 71 / 16 / 75 张输出至少一个框，平均延迟 45.6 / 13.0 / 6.5 / 9.8 / 5.7 ms（`cuda:0`，含首次预热）。
+- `pyronear_sensitive` 的低检出率（16/76）来自上游推荐的 `iou=0.01`——NMS 近乎最大抑制，为"单场景一个烟羽"设计，不是模型失效。换默认 `iou=0.7` 会得到完全不同的数字，比较时必须写明用的哪个值。
 - FireSmockDetect 上游**没有**做过早期预警的时间指标验证——模型卡明确写"no early-warning claim is made"，因为缺少合格的起烟瞬间素材。
 - Early Fire and Smoke 的模型卡描述了"连续帧状态机"（clear → smoke → early warning → fire），但**没有公开实现代码**，需要自己实现。
 

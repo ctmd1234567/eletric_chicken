@@ -11,7 +11,10 @@ SOURCE = "samples/images"
 # 在列表中保留要测试的模型，也可同时填写多个进行对比：
 # firesmockdetect_y11m：YOLO11m，烟雾；firesmockdetect_y11s：YOLO11s，烟雾。
 # early_fire_smoke：YOLOv8n，火和烟雾。
+# pyronear_sensitive：Pyronear 官方 YOLO11s，早期野火烟雾，1024 输入。
+# dfire_yolov8n：rabahdev 基于 D-Fire 训练的 YOLOv8n，烟雾和火。
 # 例如只测试 YOLOv8n：MODELS = ["early_fire_smoke"]
+# 测试两个新候选：MODELS = ["pyronear_sensitive", "dfire_yolov8n"]
 MODELS = ["firesmockdetect_y11m", "firesmockdetect_y11s", "early_fire_smoke"]
 DEVICE = "0"  # 首张 NVIDIA GPU；使用 CPU 时改为 "cpu"。
 CONFIDENCE = 0.15

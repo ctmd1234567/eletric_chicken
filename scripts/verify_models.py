@@ -32,6 +32,8 @@ NATIVE_IMGSZ = {
     "v5bA_y11m_best.pt": 1280,
     "expB_y11s_deployed.pt": 1280,
     "fire_smoke_yolov8.pt": 640,
+    "models/fire_smoke/pyronear_sensitive/best.pt": 1024,
+    "models/fire_smoke/dfire_yolov8n/best.pt": 640,
 }
 
 
@@ -44,6 +46,9 @@ def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
     rec["load"] = "ok"
     rec["load_seconds"] = round(time.perf_counter() - t0, 3)
     rec["task"] = getattr(model, "task", None)
+    rec["checkpoint_classes"] = dict(model.names)
+    if path.relative_to(ROOT).as_posix() == "models/fire_smoke/pyronear_sensitive/best.pt":
+        model.model.names = {0: "smoke"}
     rec["classes"] = getattr(model, "names", None)
     try:
         rec["params"] = sum(p.numel() for p in model.model.parameters())
@@ -56,15 +61,18 @@ def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
         rec["train_data"] = args.get("data")
     except Exception:
         rec["train_imgsz"] = None
-    rec["native_imgsz"] = NATIVE_IMGSZ.get(path.name)
+    relative_path = path.relative_to(ROOT).as_posix()
+    rec["native_imgsz"] = NATIVE_IMGSZ.get(relative_path, NATIVE_IMGSZ.get(path.name))
 
     if image is not None:
         imgsz = rec["native_imgsz"] or 640
+        iou = 0.01 if relative_path == "models/fire_smoke/pyronear_sensitive/best.pt" else 0.7
         t1 = time.perf_counter()
-        res = model.predict(str(image), imgsz=imgsz, conf=0.10, device=device, verbose=False)
+        res = model.predict(str(image), imgsz=imgsz, conf=0.10, iou=iou, device=device, verbose=False)
         rec["infer_seconds"] = round(time.perf_counter() - t1, 3)
         r = res[0]
         rec["infer_imgsz"] = imgsz
+        rec["infer_iou"] = iou
         rec["infer_device"] = str(r.boxes.data.device)
         rec["n_boxes"] = int(len(r.boxes))
         names = r.names
@@ -83,13 +91,15 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--image", type=Path, help="可选：用于冒烟推理的单张图片")
     ap.add_argument("--json", type=Path, help="把结果写入 JSON 文件")
-    ap.add_argument("--only", help="只检查某个文件名")
+    ap.add_argument("--only", help="只检查某个文件名或下载组名，如 pyronear_sensitive")
     ap.add_argument("--device", help="推理设备，如 0（首张 GPU）或 cpu；省略时自动选择")
     args = ap.parse_args()
 
     results = []
     for entry in MANIFEST:
         path = ROOT / entry["dest"]
+        if args.only and args.only not in {path.name, entry["group"]}:
+            continue
         print(f"\n== {path.name} ==")
         if not path.exists():
             print("  [缺失] 文件不存在，先运行 scripts/download_models.py")
@@ -102,8 +112,6 @@ def main() -> int:
         print(f"  sha256 : {digest}")
         print(f"  一致性 : {'与官方一致' if hash_ok else '不一致！文件可能损坏或被替换'}")
 
-        if args.only and args.only != path.name:
-            continue
         try:
             rec = inspect(path, args.image, args.device)
             rec["sha256"] = digest
