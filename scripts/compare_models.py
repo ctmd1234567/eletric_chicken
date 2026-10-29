@@ -73,6 +73,7 @@ def main() -> int:
     ap.add_argument("--stride", type=int, default=5, help="视频抽帧间隔")
     ap.add_argument("--out", type=Path, default=ROOT / "reports" / "comparison")
     ap.add_argument("--save-images", action="store_true", help="保存带检测框的帧")
+    ap.add_argument("--device", help="推理设备，如 0（首张 GPU）或 cpu；省略时自动选择")
     args = ap.parse_args()
 
     from ultralytics import YOLO
@@ -100,7 +101,7 @@ def main() -> int:
         times, hit = [], 0
         for label, idx, frame, ref in frames:
             t0 = time.perf_counter()
-            res = model.predict(frame, imgsz=imgsz, conf=args.conf, verbose=False)
+            res = model.predict(frame, imgsz=imgsz, conf=args.conf, device=args.device, verbose=False)
             ms = (time.perf_counter() - t0) * 1000
             times.append(ms)
             r = res[0]
@@ -128,6 +129,7 @@ def main() -> int:
             {
                 "model": name,
                 "weights": rel,
+                "device": str(res[0].boxes.data.device),
                 "imgsz": imgsz,
                 "frames": len(times),
                 "frames_with_detection": hit,

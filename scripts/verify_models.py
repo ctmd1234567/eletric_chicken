@@ -35,7 +35,7 @@ NATIVE_IMGSZ = {
 }
 
 
-def inspect(path: Path, image: Path | None) -> dict:
+def inspect(path: Path, image: Path | None, device: str | None = None) -> dict:
     from ultralytics import YOLO
 
     rec: dict = {"file": str(path.relative_to(ROOT)).replace("\\", "/"), "load": "failed"}
@@ -61,10 +61,11 @@ def inspect(path: Path, image: Path | None) -> dict:
     if image is not None:
         imgsz = rec["native_imgsz"] or 640
         t1 = time.perf_counter()
-        res = model.predict(str(image), imgsz=imgsz, conf=0.10, verbose=False)
+        res = model.predict(str(image), imgsz=imgsz, conf=0.10, device=device, verbose=False)
         rec["infer_seconds"] = round(time.perf_counter() - t1, 3)
         r = res[0]
         rec["infer_imgsz"] = imgsz
+        rec["infer_device"] = str(r.boxes.data.device)
         rec["n_boxes"] = int(len(r.boxes))
         names = r.names
         rec["detections"] = [
@@ -83,6 +84,7 @@ def main() -> int:
     ap.add_argument("--image", type=Path, help="可选：用于冒烟推理的单张图片")
     ap.add_argument("--json", type=Path, help="把结果写入 JSON 文件")
     ap.add_argument("--only", help="只检查某个文件名")
+    ap.add_argument("--device", help="推理设备，如 0（首张 GPU）或 cpu；省略时自动选择")
     args = ap.parse_args()
 
     results = []
@@ -103,7 +105,7 @@ def main() -> int:
         if args.only and args.only != path.name:
             continue
         try:
-            rec = inspect(path, args.image)
+            rec = inspect(path, args.image, args.device)
             rec["sha256"] = digest
             rec["sha256_match"] = hash_ok
             print(f"  加载   : ok ({rec['load_seconds']}s)")

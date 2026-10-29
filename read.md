@@ -18,6 +18,7 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 - 下载/离线校验脚本、真实加载与单图推理脚本、多模型图片/视频比较脚本。
 - 本机 Python 虚拟环境；40 张本地烟雾 JPG 图片。
 - 本次三个模型的哈希、加载、单图推理和 40 图比较均完成；`pip check` 通过。
+- 项目 `.venv` 已改为 PyTorch `2.8.0+cu129` 与 torchvision `0.23.0+cu129`，GPU 验证记录见下文。
 
 尚未具备：
 
@@ -26,7 +27,7 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 - Gymnasium 仿真环境、PPO/DQN 及已训练策略权重。
 - 飞线充电、消防通道堵塞检测器。现有模型只能识别烟或火，不能覆盖 PDF 中的全部目标。
 - ONVIF 控制、真实摄像机联调、告警服务、网页管理平台。
-- 项目 `.venv` 当前安装 CPU 版 PyTorch，因此此前模型比较使用 CPU；本机显卡及驱动正常，PyCharm 登记的另一个解释器已通过 CUDA 运算验证（详见下文）。本项目尚未开展 GPU 模型性能或实地预警验证。
+- 尚未开展实地预警验证；本地 GPU 推理检查不等于满足项目告警性能目标。
 
 ## 3. 模型下载检查
 
@@ -60,9 +61,9 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 
 ## 4. 本次运行结果
 
-模型比较使用项目 `.venv`：Windows、Python 3.13.14、PyTorch `2.15.0+cpu`，直接依赖版本见 [requirements.txt](requirements.txt)。该解释器的 `torch.version.cuda=None`、`torch.cuda.is_available()=False`，原因是安装了 CPU 构建，不能据此判断整台机器的 CUDA 不可用。本地 40 张 JPG 共 7,475,773 字节；未发现 `.part` 下载残留。没有发现本项目已下载的训练集、视频、全景或强化学习权重。
+此前模型比较使用项目 `.venv` 的旧版本 PyTorch `2.15.0+cpu`。旧环境返回 `torch.cuda.is_available()=False` 是因为安装了 CPU 构建；现已按用户要求替换成 GPU 版，当前依赖见 [requirements.txt](requirements.txt)。本地 40 张 JPG 共 7,475,773 字节；未发现 `.part` 下载残留。没有发现本项目已下载的训练集、视频、全景或强化学习权重。
 
-在同一批 40 张图片上，`conf=0.10`，各模型按上面分辨率运行：
+历史 CPU 记录：在同一批 40 张图片上，`conf=0.10`，各模型按上面分辨率运行：
 
 - YOLO11m：37/40 帧出现检测框，平均 324.8 ms/帧。
 - YOLO11s：35/40 帧出现检测框，平均 104.5 ms/帧。
@@ -70,40 +71,49 @@ YOLO 负责判断画面中的烟火；强化学习根据充电风险、可疑检
 
 这些数字只验证可运行性。样例无标签，也没有独立的负样本集；“有框比例”不等于召回率或准确率。分辨率不同，计时包含首帧开销、未专门预热，不能当严格性能基准或最终选型结论。
 
-机器可读核查记录见 [reports/download_check_2026-10-29.json](reports/download_check_2026-10-29.json)。原始本地运行输出位于 `reports/verify/current_check.json` 和 `reports/verify/comparison_current/`，因包含运行信息而被 Git 忽略。
+历史下载与 CPU 核查记录见 [reports/download_check_2026-10-29.json](reports/download_check_2026-10-29.json)，其中 CPU 环境字段记录当时情况。原始本地运行输出位于 `reports/verify/`，被 Git 忽略。
+
+### 当前 GPU 验证
+
+项目 `.venv` 切换为 PyTorch `2.8.0+cu129` 后，CUDA 矩阵乘法通过，`pip check` 通过。三个模型均重新完成单图验证与 40 张图片推理，检测结果张量设备均为 `cuda:0`：
+
+- YOLO11m：37/40 帧出现检测框，平均 54.4 ms/帧。
+- YOLO11s：35/40 帧出现检测框，平均 14.2 ms/帧。
+- YOLOv8n：36/40 帧出现检测框，平均 8.0 ms/帧。
+
+原始结果记录见 [reports/gpu_check_2026-10-29.json](reports/gpu_check_2026-10-29.json)。上述计时包含首帧开销、未专门预热，输入分辨率也不同，仅用于确认当前环境可运行，不能视为严格速度基准；无标签样例不能证明检测准确性。
 
 ## 5. 安装与运行
 
-### PyCharm 与 CUDA：已核实的解释器差异
+### PyCharm 与 CUDA
 
 2026-10-29 补充检查结果：
 
 - 显卡：NVIDIA GeForce RTX 5070 Laptop GPU；驱动：576.80；`nvidia-smi` 显示驱动支持 CUDA 12.9。
-- PyCharm 2026.2 的 SDK 配置登记了 `D:\Users\ctmd12334567\PycharmProjects\JupyterProject\.venv\Scripts\python.exe`。
-- 使用该解释器实际运行 [scripts/verify_cuda.py](scripts/verify_cuda.py)：PyTorch `2.8.0+cu129`、torchvision `0.23.0+cu129`、CUDA runtime `12.9`、`CUDA available=True`、GPU capability `(12, 0)`。
-- 已在 GPU 上执行 32×32 矩阵乘法并同步，结果 `32.0`，退出码为 0。CUDA 可用已由真实计算确认。
-- 该解释器没有安装 Ultralytics；这次确认的是 CUDA 运算，尚未在其中执行本项目 YOLO 推理。没有修改它或项目 `.venv` 的依赖。
+- 先前已在 PyCharm 登记的 JupyterProject 环境中验证 CUDA 运算。
+- 本次将本项目 `.venv` 也切换到相同 GPU 构建：PyTorch `2.8.0+cu129`、torchvision `0.23.0+cu129`、CUDA runtime `12.9`。保留本项目 Ultralytics 和其他依赖。
 
-在 PyCharm 的项目 Python Interpreter 中选择上述已验证解释器，再运行 `scripts/verify_cuda.py` 即可复核。也可在 PowerShell 直接运行：
+在 PyCharm 的项目 Python Interpreter 中选择本项目 `D:\eletric_chicken\.venv\Scripts\python.exe`，再运行 [scripts/verify_cuda.py](scripts/verify_cuda.py) 复核。也可在 PowerShell 直接运行：
 
 ```powershell
-& 'D:\Users\ctmd12334567\PycharmProjects\JupyterProject\.venv\Scripts\python.exe' scripts/verify_cuda.py
+.\.venv\Scripts\python.exe scripts/verify_cuda.py
 ```
 
-本次检查读取了 PyCharm 的 SDK 配置并直接执行同一个 Python 可执行文件，没有通过 PyCharm 界面点击运行，也没有修改 IDE 配置。项目当前没有 `.idea` 配置，不能认定它已选择该解释器。
+本次使用项目 Python 可执行文件验证，没有通过 PyCharm 界面点击运行，也没有修改 IDE 全局配置。PyCharm 中应选择上述项目解释器。
 
-如果选择项目自己的 `D:\eletric_chicken\.venv\Scripts\python.exe`，当前仍会得到 False，需要先安装合适的 CUDA 版 PyTorch。`requirements.txt` 记录的是之前 CPU 比较环境的固定版本；直接安装会影响已有 GPU 环境的 torch/torchvision 版本，请勿直接用它覆盖已验证的 CUDA 环境。GPU 安装应使用 [PyTorch 官方安装说明](https://pytorch.org/get-started/locally/)选择匹配的构建，再运行检查脚本确认。
+`requirements.txt` 已固定 `+cu129` GPU 构建并包含 PyTorch 官方下载源，不会再次按旧清单安装 CPU 版本。版本组合与安装源参见 [PyTorch 官方历史版本安装说明](https://pytorch.org/get-started/previous-versions/)。这份清单面向支持该 CUDA 构建的平台；没有 NVIDIA GPU 或使用 macOS 时需另选适合平台的 PyTorch。
 
 ### 创建项目环境与下载模型
 
 以下命令从仓库根目录执行。仓库不附带 `.venv`、权重和样例，克隆后需要创建环境、下载权重并自行准备图片。
 
-Windows PowerShell（复现此前 CPU 模型比较环境）：
+Windows PowerShell（GPU 环境）：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe scripts/verify_cuda.py
 .\.venv\Scripts\python.exe scripts/download_models.py
 .\.venv\Scripts\python.exe scripts/download_models.py --check
 .\.venv\Scripts\python.exe scripts/verify_models.py --json reports/verify/load_check.json
@@ -135,13 +145,15 @@ python scripts/download_models.py --only early_fire_smoke
 准备 `samples/test.jpg` 或将图片放入 `samples/images/` 后，使用所在环境的 Python 执行：
 
 ```bash
-python scripts/verify_models.py --image samples/test.jpg --json reports/verify/infer_check.json
-python scripts/compare_models.py --source samples/images --conf 0.10
+python scripts/verify_models.py --image samples/test.jpg --device 0 --json reports/verify/infer_check.json
+python scripts/compare_models.py --source samples/images --conf 0.10 --device 0
 python scripts/compare_models.py --source samples/carport.mp4 --stride 5
 python scripts/compare_models.py --source samples/images --models early_fire_smoke --save-images
 ```
 
 比较脚本输出 `reports/comparison/detections.csv`、`summary.csv` 和可选带框图片。视频路径必须真实存在，`--stride` 使用正整数。视频帧会先载入内存，长视频建议先裁短。当前只验证了 JPG 目录输入，视频和保存带框图片分支未执行。
+
+`--device 0` 强制使用首张 GPU，`--device cpu` 使用 CPU；省略时由 Ultralytics 自动选择。比较汇总及单图推理记录包含实际设备字段，可核对是否为 `cuda:0`。
 
 ## 6. 后续工作顺序
 
