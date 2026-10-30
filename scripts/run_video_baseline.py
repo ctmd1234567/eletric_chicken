@@ -8,7 +8,7 @@ from sentinel.paths import ROOT
 from sentinel.pipelines.video import run as run_baseline
 
 # 视频文件或视频目录；相对路径以项目根目录为准。
-SOURCE = "video/Video Project 8.mp4"
+SOURCE = "video/vvvv.mp4"
 # 模型名 → 输入尺寸：已按各自上游示例/权重原生尺寸设置，注释一行即可排除。
 # 同时启用多行会分别运行多个模型，所有模型处理相同视频和相同帧。
 # firesmockdetect_y11m：FireSmockDetect 烟雾模型。
@@ -24,7 +24,7 @@ MODELS = {
     # "lwst_fsd": 1024,
 }
 DEVICE = "0"  # 首张 NVIDIA GPU；使用 CPU 时改为 "cpu"。
-CONFIDENCE = 0.02  # 手动阈值，直接用于所选模型；None 才使用各自上游默认。
+CONFIDENCE = 0.10  # 手动阈值，直接用于所选模型；None 才使用各自上游默认。
 IOU = None # 手动 NMS 阈值，越低重叠框抑制越强；None 使用各自默认（LwST=0.65）。
 # 只在这里调参。填写数字后直接生效，没有单模型参数再次覆盖。
 VIDEO_STRIDE = 1  # 每几帧检测一次；1 为逐帧检测。
