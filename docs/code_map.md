@@ -1,6 +1,10 @@
 # 代码在哪里改
 
+本轮场景补充和重点采样：`scripts/prepare_urban_smoke.py` → `sentinel/training/urban_data.py`；训练起点及默认参数在 `scripts/train_expanded_smoke.py`，执行和基线评测在 `sentinel/training/dfire_small_smoke.py`；私有云端包和路径重建在 `sentinel/training/cloud_bundle.py`。当前操作说明见 `docs/urban_smoke_autodl.md`。
+
 日常运行只改 `scripts/run_models.py` 或 `scripts/run_video_baseline.py` 顶部的设置，然后直接运行该文件。当前选中的模型、素材和自定义尺寸以这两个文件为准；整理期间的本地配置修改也已保留。命令行入口仍支持原来的 `python scripts/xxx.py ...`。
+
+本地定向微调与本次 CVAT 导入见 `docs/ebike_focused_local.md`。标注导入入口 `scripts/import_annotations.py`，实现 `sentinel/training/annotation_import.py`；规范图像/标签配对和重点采样在 `sentinel/training/focused_data.py`；训练后固定阈值对比入口 `scripts/evaluate_focused_smoke.py`，实现 `sentinel/training/focused_evaluation.py`。
 
 ## 按修改目的找文件
 
@@ -19,6 +23,9 @@
 - **LwST 五帧模型**：`sentinel/models/lwst/` 下 `detector.py` 是预处理、推理和解码，`architecture.py` 是固定网络装配，`video.py` 是五帧窗口，`sources.py` 固定作者源码版本与摘要。
 - **CSV、实验编号目录、分位数**：`sentinel/reports.py`。项目根目录只在 `sentinel/paths.py` 定义。
 - **测试**：`tests/`。
+- **扩充数据的手动训练入口**：`scripts/train_expanded_smoke.py` 显式选择本轮 balanced/full 数据，`--dry-run` 只查看配置；训练规模、实测速度外推、启动和自行检验步骤见 `docs/expanded_training_runbook.md`。正式训练由用户启动。
+- **AutoDL 上传包和 Linux 路径迁移**：`scripts/prepare_autodl.py` 为入口，实现在 `sentinel/training/cloud_bundle.py`；`install_cloud.sh` / `requirements-cloud.txt` 用于云实例安装，操作见 `docs/autodl_3080ti.md`。上传包只包含 balanced 所需图片、标注和训练代码，生成到被忽略的 `outputs/cloud/`。
+- **用户明确要求的 D-Fire 小烟雾微调实验**：`scripts/finetune_dfire_small_smoke.py` 为入口，`sentinel/training/dfire_small_smoke.py` 校验原权重和类别映射，在独立目录训练并对比同一测试子集。数据准备脚本与素材保存在被忽略的本地 `datasets/fasdd_source/`；微调产物登记为 `dfire_small_smoke`，编辑器入口已选用，原始 `dfire_yolov8n` 保留。
 
 业务代码只依赖 `sentinel` 内部模块，不再从 `scripts` 导入实现。`scripts/_bootstrap.py` 只为直接运行脚本添加项目导入路径，没有推理逻辑。
 

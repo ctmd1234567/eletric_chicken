@@ -1,0 +1,516 @@
+{
+  "status": "complete",
+  "model_key": "dfire_ludan_focused",
+  "best_epoch": 22,
+  "epochs_completed": 30,
+  "selection_criterion": "Best reference validation mAP50-95 during training; epoch is 1-based.",
+  "weights": "runs\\dfire_ebike_focused\\experiment_002\\train\\weights\\best.pt",
+  "sha256": "fb335751a28ebcc7f3d35651d4eb8ef4a9805b2e62db32b14b690a4010f7f919",
+  "inference_imgsz": 960,
+  "default_model_changed": false,
+  "baseline_sha256_unchanged": "22fd0c9f6d2498e3ea3d5c3f456f1f13393d66e068a4d1d6c698b82777f2f810",
+  "resolution_checks": {
+    "960": {
+      "0.15": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 13,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 20,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 5
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 28,
+            "smoke_fp": 37,
+            "fire_gt_boxes": 8,
+            "fire_tp": 6,
+            "fire_fp": 2
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 1,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 93,
+            "smoke_fp": 34,
+            "fire_gt_boxes": 2,
+            "fire_tp": 1,
+            "fire_fp": 0
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 0,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 0,
+          "fire_frames": 0,
+          "any_detection_frames": 0,
+          "smoke_frame_indices": [],
+          "fire_frame_indices": []
+        }
+      },
+      "0.25": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 10,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 10,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 3
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 24,
+            "smoke_fp": 16,
+            "fire_gt_boxes": 8,
+            "fire_tp": 5,
+            "fire_fp": 2
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 1,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 92,
+            "smoke_fp": 13,
+            "fire_gt_boxes": 2,
+            "fire_tp": 1,
+            "fire_fp": 0
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 0,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 0,
+          "fire_frames": 0,
+          "any_detection_frames": 0,
+          "smoke_frame_indices": [],
+          "fire_frame_indices": []
+        }
+      }
+    },
+    "1280": {
+      "0.15": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 20,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 30,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 13
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 27,
+            "smoke_fp": 38,
+            "fire_gt_boxes": 8,
+            "fire_tp": 6,
+            "fire_fp": 3
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 4,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 81,
+            "smoke_fp": 50,
+            "fire_gt_boxes": 2,
+            "fire_tp": 1,
+            "fire_fp": 4
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 2,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 2,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 17,
+          "fire_frames": 0,
+          "any_detection_frames": 17,
+          "smoke_frame_indices": [
+            147,
+            173,
+            174,
+            178,
+            179,
+            180,
+            259,
+            370,
+            371,
+            375,
+            376,
+            444,
+            486,
+            498,
+            522,
+            534,
+            558
+          ],
+          "fire_frame_indices": []
+        }
+      },
+      "0.25": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 12,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 15,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 4
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 24,
+            "smoke_fp": 15,
+            "fire_gt_boxes": 8,
+            "fire_tp": 4,
+            "fire_fp": 1
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 74,
+            "smoke_fp": 30,
+            "fire_gt_boxes": 2,
+            "fire_tp": 1,
+            "fire_fp": 1
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 0,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 2,
+          "fire_frames": 0,
+          "any_detection_frames": 2,
+          "smoke_frame_indices": [
+            178,
+            444
+          ],
+          "fire_frame_indices": []
+        }
+      }
+    },
+    "1536": {
+      "0.15": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 21,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 35,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 18
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 20,
+            "smoke_fp": 37,
+            "fire_gt_boxes": 8,
+            "fire_tp": 5,
+            "fire_fp": 2
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 6,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 58,
+            "smoke_fp": 89,
+            "fire_gt_boxes": 2,
+            "fire_tp": 0,
+            "fire_fp": 6
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 1,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 1,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 33,
+          "fire_frames": 44,
+          "any_detection_frames": 72,
+          "smoke_frame_indices": [
+            119,
+            136,
+            137,
+            138,
+            140,
+            145,
+            146,
+            147,
+            148,
+            156,
+            162,
+            163,
+            173,
+            174,
+            179,
+            180,
+            191,
+            202,
+            203,
+            205,
+            319,
+            320,
+            323,
+            337,
+            344,
+            394,
+            395,
+            402,
+            410,
+            437,
+            444,
+            467,
+            472
+          ],
+          "fire_frame_indices": [
+            162,
+            163,
+            174,
+            175,
+            186,
+            187,
+            198,
+            199,
+            216,
+            217,
+            222,
+            223,
+            246,
+            252,
+            253,
+            258,
+            259,
+            331,
+            344,
+            348,
+            349,
+            366,
+            367,
+            368,
+            402,
+            403,
+            426,
+            427,
+            432,
+            433,
+            438,
+            439,
+            462,
+            463,
+            464,
+            468,
+            475,
+            476,
+            481,
+            482,
+            535,
+            536,
+            559,
+            560
+          ]
+        }
+      },
+      "0.25": {
+        "groups": {
+          "reference_web": {
+            "images": 45,
+            "negative_images": 45,
+            "negative_images_with_detection": 17,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 17,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 9
+          },
+          "user_manual_previous": {
+            "images": 40,
+            "negative_images": 0,
+            "negative_images_with_detection": 0,
+            "smoke_gt_boxes": 41,
+            "smoke_tp": 16,
+            "smoke_fp": 16,
+            "fire_gt_boxes": 8,
+            "fire_tp": 4,
+            "fire_fp": 1
+          },
+          "user_manual_current": {
+            "images": 100,
+            "negative_images": 14,
+            "negative_images_with_detection": 3,
+            "smoke_gt_boxes": 101,
+            "smoke_tp": 48,
+            "smoke_fp": 46,
+            "fire_gt_boxes": 2,
+            "fire_tp": 0,
+            "fire_fp": 4
+          },
+          "replay_jjs": {
+            "images": 32,
+            "negative_images": 32,
+            "negative_images_with_detection": 1,
+            "smoke_gt_boxes": 0,
+            "smoke_tp": 0,
+            "smoke_fp": 1,
+            "fire_gt_boxes": 0,
+            "fire_tp": 0,
+            "fire_fp": 0
+          }
+        },
+        "jjs_video": {
+          "frames": 565,
+          "smoke_frames": 14,
+          "fire_frames": 12,
+          "any_detection_frames": 26,
+          "smoke_frame_indices": [
+            136,
+            137,
+            140,
+            145,
+            147,
+            179,
+            180,
+            202,
+            203,
+            205,
+            319,
+            337,
+            344,
+            410
+          ],
+          "fire_frame_indices": [
+            186,
+            187,
+            198,
+            199,
+            258,
+            259,
+            366,
+            367,
+            438,
+            439,
+            462,
+            463
+          ]
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Manual and jjs image groups are training data; scores measure fit.",
+    "Reference web negatives were used for model selection, not an independent test.",
+    "Full-video counts are output counts, not measured false-positive rates."
+  ],
+  "reference_test": {
+    "baseline": {
+      "metrics/precision(B)": 0.751486398070575,
+      "metrics/recall(B)": 0.69443649659522,
+      "metrics/mAP50(B)": 0.7704793644491245,
+      "metrics/mAP50-95(B)": 0.45022771220701135,
+      "fitness": 0.45022771220701135
+    },
+    "finetuned": {
+      "metrics/precision(B)": 0.711660283027358,
+      "metrics/recall(B)": 0.6229338842975207,
+      "metrics/mAP50(B)": 0.6771988638536207,
+      "metrics/mAP50-95(B)": 0.38200921584060205,
+      "fitness": 0.38200921584060205
+    }
+  },
+  "verification": {
+    "annotation_and_sampling_unit_tests": 9,
+    "weight_hash_and_gpu_inference": "passed",
+    "compare_entry_two_models": "passed",
+    "resolution_checks": "960,1280,1536 complete",
+    "original_baseline_hash": "unchanged"
+  },
+  "user_video_observation": {
+    "description": "User reports good smoke recognition with elevated false alarms on new videos.",
+    "quantified": false
+  }
+}

@@ -15,21 +15,27 @@ SOURCE = "video/Video Project 8.mp4"
 # firesmockdetect_y11m：YOLO11m，烟雾。
 # early_fire_smoke：YOLOv8n，火和烟雾。
 # dfire_yolov8n：rabahdev 基于 D-Fire 训练的 YOLOv8n，烟雾和火。
+# dfire_small_smoke：本地 FASDD_CV 小烟雾微调版本，实验输入 960。
+# dfire_ludan：本地标注＋jjs/网络负样本增量微调，输入 960。
+# dfire_ludan_focused：本轮电动车定向微调，第 22 轮最佳，输入 960；旧参考集退化，作为候选对比。
 # safety_yolo26：e1250/safety_detection，Home Fire Dataset 训练的 YOLO26n，640 输入。
 #   权重实际类别为 0=smoke、1=fire，与模型卡相反；保留权重原始映射，不擅自交换。
 #   未声明权重许可，仅作为本地待核实候选；详见 NOTICE.md。
 # Safety YOLO26 权重实测 end2end=False，当前走传统 NMS（默认 iou=0.7）。
 # 例如只测试 YOLOv8n：MODELS = ["early_fire_smoke"]
 MODELS = [
-    "firesmockdetect_y11m",
-    "early_fire_smoke",
-    "dfire_yolov8n",
-    "safety_yolo26",
+    # "firesmockdetect_y11m",
+    # "early_fire_smoke",
+    # "dfire_yolov8n",
+    # "dfire_small_smoke",
+    "dfire_ludan",
+    # "dfire_ludan_focused",  # 测试本轮权重时启用；同时保留上一行可对比。
+    # "safety_yolo26",
 ]
 DEVICE = "0"  # 首张 NVIDIA GPU；使用 CPU 时改为 "cpu"。
-CONFIDENCE = None  # 各用上游示例：YOLO11m=0.10，其余三个=库默认0.25；填写数字会统一覆盖。
+CONFIDENCE = None  # YOLO11m 默认 0.10，其余 YOLO 默认 0.25；数字统一覆盖。
 IOU = None  # 填写数字直接设置所选模型的 NMS 阈值；None 使用各自默认。
-# 原生输入：YOLO11m=1280，其余三个=640；具体来源见 docs/upstream_inference.md。
+# 输入尺寸：YOLO11m=1280，本地微调版本=960，其余上游 YOLO=640；以 catalog.py 为准。
 VIDEO_STRIDE = 1  # 每几帧检测一次；1 为逐帧检测，保留原视频帧率。
 SAVE_IMAGES = True  # 保存结果：图片→JPG，视频→H.264 MP4（无音轨，需要 FFmpeg）。
 SHOW_IMAGES = True  # 图片逐张显示；视频处理完成后，用系统播放器播放带框 MP4。

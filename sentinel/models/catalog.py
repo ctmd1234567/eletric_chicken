@@ -1,4 +1,4 @@
-"""模型的唯一登记处：来源、哈希、原生尺寸和明确的上游推理设置。
+"""模型的唯一登记处：来源、哈希、输入尺寸和明确的推理设置。
 
 iou 缺省表示读取 checkpoint，不能在各入口补一个统一常数。
 """
@@ -52,6 +52,36 @@ MODELS = {
         'sha256': 'b91633799ceb052c814b4f8b77a37efc9a40f002d528df97d74463585fa4f28f',
         'dest': 'models/fire_smoke/dfire_yolov8n/best.pt',
         'imgsz': 640,
+    },
+    'dfire_small_smoke': {
+        'group': 'dfire_small_smoke',
+        'provider': 'local_training',
+        'revision': 'fasdd-small-smoke-experiment-001-best-epoch-12',
+        'file': 'best.pt',
+        'size': 6262442,
+        'sha256': '4c76642b14ef471f966220115391c3226b248e974bacf154f49a2da8a30d66ad',
+        'dest': 'runs/dfire_fasdd_small_smoke/experiment_001/train/weights/best.pt',
+        'imgsz': 960,
+    },
+    'dfire_ludan': {
+        'group': 'dfire_ludan',
+        'provider': 'local_training',
+        'revision': 'ludan-experiment-002-jjs-web-negatives-best-epoch-6',
+        'file': 'best.pt',
+        'size': 6257322,
+        'sha256': '22fd0c9f6d2498e3ea3d5c3f456f1f13393d66e068a4d1d6c698b82777f2f810',
+        'dest': 'runs/dfire_ludan/experiment_002/train/weights/best.pt',
+        'imgsz': 960,
+    },
+    'dfire_ludan_focused': {
+        'group': 'dfire_ludan_focused',
+        'provider': 'local_training',
+        'revision': 'ebike-focused-experiment-002-best-epoch-22',
+        'file': 'best.pt',
+        'size': 6259818,
+        'sha256': 'fb335751a28ebcc7f3d35651d4eb8ef4a9805b2e62db32b14b690a4010f7f919',
+        'dest': 'runs/dfire_ebike_focused/experiment_002/train/weights/best.pt',
+        'imgsz': 960,
     },
     'safety_yolo26': {
         'group': 'safety_yolo26',

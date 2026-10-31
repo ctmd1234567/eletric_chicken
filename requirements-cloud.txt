@@ -1,0 +1,5 @@
+# Linux, Python >=3.12. Install PyTorch separately using the official CUDA index.
+ultralytics==8.4.192
+opencv-python==5.0.0.93
+numpy==2.5.4
+dill==0.3.8

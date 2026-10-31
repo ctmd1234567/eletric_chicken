@@ -2,11 +2,23 @@
 
 面向在本仓库里工作的编码代理与协作者。内容只描述**已经核实的事实**；未验证的内容统一标注为"待验证"。
 
+2026-10-31 用户明确授权把当前代码和微调新模型上传现有 GitHub 仓库。三份指定最佳权重随 Git 保存（`dfire_small_smoke`、`dfire_ludan`、`dfire_ludan_focused`），其余训练产物及数据继续排除；视频入口当前用户选择 `dfire_ludan_focused`，以当前文件为准。新视频识别效果好、误报偏多为用户观察，未作逐帧量化。
+
 ## 1. 项目目标
+
+2026-10-31 本地定向微调已完成：`experiment_001` 因新图标签路径不配对已判无效；修复后的 `datasets/ebike_focused_20261031_v2/` 已核对实际 YOLO 标签数组。`runs/dfire_ebike_focused/experiment_002` 完成 30 轮，保留第 22 轮最佳，登记为 `dfire_ludan_focused`。960 / 1280 / 1536 已实测，本轮建议 960；手工训练图拟合与 jjs 回放改善，旧参考集退化，因此默认仍为原始 `dfire_ludan`。选择、校验和限制见实验 `selection.json` 与 `docs/ebike_focused_local.md`。
+
+2026-10-31 最新授权：用户要求本地从 `dfire_ludan` 继续训练。新图训练使用授权已由用户明确确认；新图中 14 张缺标签帧由用户判定为无肉眼可辨认烟雾并要求作背景，9 个越界框按要求裁到图片边界。当前定向清单为 762 张不同训练图（人工审核共 140 张，jjs 32 张单独提高采样），运行与限制见 `docs/ebike_focused_local.md`。下面“未在本机启动”“等待授权”等描述为之前阶段；完成状态以当前实验输出为准。
+
+2026-10-31 本轮用户要求补充相近场景标注并从 `dfire_ludan` 继续训练，手工标注 40 张提高采样占比；准备结果和当前入口见 `docs/urban_smoke_autodl.md`。按用户要求移除上一轮 `dfire_expanded` 的权重/登记及无用下载，历史说明不代表当前可调用模型。未在本机启动新一轮正式训练，不能声称新配方已提升效果。
+
+2026-10-31 后续 jjs 回放检查发现云端版本报烟帧明显增多，两个编辑器入口默认恢复 `dfire_ludan`，`dfire_expanded` 保留为注释候选。下段默认启用云端版本的说明是接入时状态；对比依据见 `docs/model_comparison.md`。
+
+2026-10-31 已取回 AutoDL balanced / 960 / 30 轮训练产物，新增本地模型 `dfire_expanded`，两个编辑器入口默认启用此版本。权重位于被忽略的 `outputs/autodl_results/` 下，固定路径与摘要以 `sentinel/models/catalog.py` 为准；旧模型保留。此前关于默认启用 `dfire_small_smoke` 的描述为历史状态，内部实验仍不能证明车棚预警能力。
 
 研究电动自行车停放充电场所的**早期薄烟预警**：锂电池热失控通常先冒白烟、后起明火，中间可能只有几十秒。固定摄像头下车棚遮挡严重、远端烟雾像素极少，本项目让一台云台摄像机在强化学习控制下主动巡视，YOLO 负责"看到了什么"，策略负责"看哪里、怎么看"。
 
-**当前阶段只做模型侧准备**：下载、校验、加载、在同一批素材上跑通对比链路。训练、仿真环境、强化学习策略、云台闭环、管理平台均**尚未开始**。
+**当前以模型侧准备为主**：下载、校验、加载、在同一批素材上跑通对比链路。2026-10-30 按用户明确授权完成首次 D-Fire / FASDD_CV 小烟雾微调实验，独立产物和验证见 `docs/dfire_small_smoke_finetune.md`；原候选权重保留，编辑器入口现选用 `dfire_small_smoke`。该内部子集实验不代表车棚预警能力。仿真环境、强化学习策略、云台闭环、管理平台均**尚未开始**。
 
 明确不做的事：
 
@@ -16,7 +28,7 @@
 
 ## 2. 目录结构与职责
 
-2026-10-30 重构后，`scripts/` 只保留运行入口；实现位于 `sentinel/models/`、`sentinel/pipelines/`、`sentinel/media/`、`sentinel/evaluation/`，测试位于 `tests/`。按修改目的查阅 [docs/code_map.md](docs/code_map.md)。同日已移除 `pyronear_sensitive`、`firesmockdetect_y11s`、`fasdd_yolo26n` 的登记、本地权重和专用参数。当前保留 YOLO11m、Early Fire and Smoke、D-Fire、Safety YOLO26、LwST-FSD 五个模型，以 `sentinel/models/catalog.py` 和 `docs/model_comparison.md` 为准。下方模型清单、分发数量和五模型实测数据是早期历史记录，涉及已移除模型的描述不代表当前状态。
+2026-10-30 重构后，`scripts/` 只保留运行入口；实现位于 `sentinel/models/`、`sentinel/pipelines/`、`sentinel/media/`、`sentinel/evaluation/`，测试位于 `tests/`。按修改目的查阅 [docs/code_map.md](docs/code_map.md)。同日已移除 `pyronear_sensitive`、`firesmockdetect_y11s`、`fasdd_yolo26n` 的登记、本地权重和专用参数。当前保留 YOLO11m、Early Fire and Smoke、D-Fire、Safety YOLO26、LwST-FSD 五个上游模型，另登记本地微调版 `dfire_small_smoke`，以 `sentinel/models/catalog.py` 和 `docs/model_comparison.md` 为准。下方模型清单、分发数量和五模型实测数据是早期历史记录，涉及已移除模型的描述不代表当前状态。
 
 ```text
 README.md                  项目概览、快速开始

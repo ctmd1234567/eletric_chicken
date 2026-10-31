@@ -1,5 +1,21 @@
 # 模型对比记录
 
+2026-10-31 本轮本地定向候选 `dfire_ludan_focused` 已完成：从原始 `dfire_ludan` 训练 30 轮，按参考验证集选择第 22 轮，输入 960。手工训练图烟雾拟合和 jjs 回放改善，但旧参考测试整体 mAP50–95 从 0.45023 降到 0.38201，参考网络背景出框增加；保留原始基线默认，不作为全面升级。960 / 1280 / 1536 已在同一阈值下比较，本轮 960 更好。权重大小 6,259,818 字节，SHA-256 `fb335751a28ebcc7f3d35651d4eb8ef4a9805b2e62db32b14b690a4010f7f919`，详见 [本轮完整记录](ebike_focused_local.md)。
+
+2026-10-31 按用户要求移除上一轮 `dfire_expanded` 的权重与登记，旧实验数字仅供追溯。下一轮从 `dfire_ludan` 初始化，加入核对后的相近场景标注并提高用户手工标注采样频次；本机尚未正式训练，配方与上传说明见 [本轮说明](urban_smoke_autodl.md)。
+
+2026-10-31 用户反馈云端版本误报增多后，默认恢复 `dfire_ludan`，`dfire_expanded` 保留为对比候选。核对实际 manifest：同为 960 / conf=0.15 / IoU=0.7 / rect=True / stride=1。jjs（565 帧）的新模型记录 `samples/video_results/run_060/` 有 273 帧输出烟雾框，旧模型本次重跑 `reports/verify/autodl_regression_jjs/run_001/` 为 6 帧。两个记录的视频 SHA-256 相同。此视频曾提供旧模型训练负样本，并非独立泛化测试；未逐帧标注完整视频，不将报烟帧数当作误报率。另一个视频 Video Project 8 的旧/新输出烟雾帧为 218/158（run_058/run_059，同一视频摘要），未匹配真值，不能由此计算召回率。训练脚本确认云端从原始 `dfire_yolov8n` 初始化，未继承 `dfire_ludan`；comparison.json 的 baseline 也是原始 D-Fire，不能证明优于此前默认模型。
+
+2026-10-31 接入 AutoDL 产物 `dfire_expanded`，类别 `0=smoke,1=fire`，默认输入 960。RTX 3080 Ti 完成 balanced / batch=8 / 30 轮训练，`comparison.json` 状态为 complete；`best_epoch=29` 是零起始索引，对应第 30 轮。权重 SHA-256 为 `d1d7219bcafb8cad426a172350eaa6ff81381c6efa448ab821ea96c9ac1ef87a`，本地路径见 `sentinel/models/catalog.py`。云端内部测试同为 960 输入时，原模型 / 微调模型的烟雾 AP50 为 0.5686 / 0.7508，双类 mAP50 为 0.5933 / 0.7559。上述为返回报告的内部测试结果，本次接入没有重跑完整测试集，不能据此宣称车棚召回率、误报率或预警能力。两个编辑器入口默认启用 `dfire_expanded`，旧模型保留，可取消注释进行对比；调用方式见 README。
+
+2026-10-30 按用户要求将现有 `dfire_ludan` 更新为 `experiment_002`，不新增模型名。混合 621 张训练图片（含 32 张 jjs、99 张网络负样本）训练 11 轮早停，选择第 6 轮；16 张模糊烟雾帧仍排除。`imgsz=960,conf=0.15` 时，jjs 的 32 张训练采样帧有误报的图片从 2 张变为 0 张；45 张按作者留出的网络验证背景图从 11 张变为 8 张（此集参与模型选择，不是独立测试）；原 FASDD 参考测试烟雾 AP50 从 0.7168 变为 0.7173。训练视频上的变化不能证明新视频泛化能力。前版权重保留于 experiment_001；逐图结果见本地 experiment_002 的 comparison.json 和 negatives JSON。
+
+2026-10-30 新增本地 `dfire_ludan`：从 `dfire_small_smoke` 继续微调，40 张用户标注帧＋160 张 FASDD 烟雾图＋40 张背景图，16 张模糊帧排除；冻结前 10 层，以学习率 0.0001 训练 15 轮，按原 FASDD 验证集选择第 15 轮。原 FASDD 内部测试烟雾 AP50 从 0.7084 变为 0.7168，AP50–95 从 0.3931 变为 0.3875；本地 40 张训练图片的烟雾 AP50 从 0.0133 变为 0.2161，后者仅反映训练集拟合，不能称为泛化测试。该视频不再是未见过的测试素材；此批未新增针对光头、墙壁、反光的本地负样本。结果与配方保存在本地 `runs/dfire_ludan/experiment_001/comparison.json`、`datasets/ludan_finetune/`。
+
+本地微调版本已登记为 `dfire_small_smoke`（960 输入，类别 `0=smoke,1=fire`），原始版本仍为 `dfire_yolov8n`。编辑器视频入口已选用微调版；命令行可通过 `--models dfire_small_smoke` 显式选择。原有五个上游候选之外，此项为第六个本地实验模型，无法从上游重新下载。
+
+2026-10-30 按用户要求完成首次本地 D-Fire 小烟雾微调实验，产物独立保存在 `runs/dfire_fasdd_small_smoke/experiment_001/train/weights/best.pt`，不替换原候选。FASDD_CV 内部测试集上，同为 960 输入时烟雾 AP50 为原模型 0.3204、微调模型 0.7084；存在事件相似、上游数据重叠与原标注噪声等限制，不能作为真实车棚泛化能力结论。筛选标准、固定阈值误报与完整验证见 [实验记录](dfire_small_smoke_finetune.md)。
+
 2026-10-30 新增本地候选 `lwst_fsd`：作者 [WCUSTC/LwST-FSD](https://github.com/WCUSTC/LwST-FSD) 的 FIgLib 五帧 checkpoint，11,578,642 参数，输入 1024，单类 smoke，NMS IoU=0.65。固定源码版本 `af3ed8ac9686a607ec2330275fbb95cf8d1f910d`；权重固定摘要见 `sentinel/models/catalog.py` 的 MODELS。567 个参数/缓冲区严格匹配，已在 GPU 跑通单图重复五帧的加载检查；该检查不证明时序效果。完整视频链路和时序验证见本地运行记录及 `docs/video_baseline.md`。只有新视频入口支持它，原有 `run_models.py` 仍使用 YOLO 候选。模型、源码许可尚未核清，仅本地演示，不随 Git 分发；车棚薄烟召回、误报及预警延迟均待测。
 
 本文件是后续实验的**填写模板 + 已知事实**。规则很简单：**没测过的字段写"待测"，不写估计值。**

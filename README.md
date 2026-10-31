@@ -1,10 +1,30 @@
 # 电鸡哨兵 · eletric_chicken
 
+当前快照随 Git 保存三份本地微调最佳权重：`dfire_small_smoke`、`dfire_ludan`、`dfire_ludan_focused`，均保持 `catalog.py` 登记的原路径与 SHA-256。克隆后可直接加载；完整训练目录、训练数据和第三方视频不分发。视频入口当前选用 `dfire_ludan_focused`、960 输入、置信度 0.15，素材路径由使用者自行设置。用户在新视频上的观察为烟雾识别效果好、仍有较多误报；尚无这些新视频的逐帧真值评测，不把该观察表述为已测精确率。
+
+本次本地定向微调已完成，候选登记名 `dfire_ludan_focused`，保留第 22 轮最佳和 960 输入；旧参考集存在退化，原始 `dfire_ludan` 默认保留。调用、相同阈值回放与限制见 [本轮记录](docs/ebike_focused_local.md)。
+
+2026-10-31 最新训练路线：用户要求本地从 `dfire_ludan` 继续微调，使用 762 张不同训练图，重点采样 140 张人工审核图及 32 张 jjs 干扰帧，不直接使用三万多张混合集。入口、采样占比、14 张人工确认背景和 9 个越界框裁剪见 [本地定向微调说明](docs/ebike_focused_local.md)。下文 AutoDL 打包、授权待核实及尚未开训等描述属于此前阶段，实际运行状态见本轮输出，不表示已完成训练。
+
+2026-10-31 本轮准备从 `dfire_ludan` 继续训练的场景补充数据及私有 AutoDL 包：用户手工标注 40 张重点采样，另加入 52 张核对过的实际场景图片和 239 张合成监控图片。训练清单、叠框预览、来源限制及云端命令见 [本轮训练说明](docs/urban_smoke_autodl.md)。推理入口继续使用 `dfire_ludan`；按用户要求移除上一轮退化的 `dfire_expanded` 权重和登记，下文相关接入内容仅为历史记录。新一轮尚未启动正式训练。
+
+2026-10-31 回放检查后，两个编辑器入口默认恢复为 `dfire_ludan`，云端 `dfire_expanded` 保留为注释候选。同为 960 / conf=0.15 / IoU=0.7，jjs 的 565 帧里旧模型 6 帧、新模型 273 帧输出烟雾框；该视频参与过旧模型训练，此结果仅说明这段视频的行为差异，不能作为独立泛化指标。云端模型从原始 D-Fire 初始化，未继承 ludan/jjs 专项微调，云端报告只与原始 D-Fire 比较。下文接入时默认启用云端模型的描述已被本条取代，调用名和保留路径仍有效。
+
 **用 YOLO 识别烟火，让强化学习决定云台看哪里，面向电动自行车停放充电场所研究早期火情预警。**
 
 车棚里的车辆会互相遮挡，远处的少量白烟在固定监控中也可能只有很少的像素。本项目希望通过云台转动、变焦与可疑点复核，提高车位覆盖率，并缩短发现可疑烟雾的时间。
 
-**当前进度：保留 5 个候选权重，均已完成本机校验和推理链路检查，支持图片对比、流式视频基线和连续帧告警对照。强化学习、仿真环境、摄像机闭环和管理平台仍待开发。**
+**当前进度：保留 5 个上游候选权重及多个本地微调版本，支持图片对比、流式视频基线和连续帧告警对照。强化学习、仿真环境、摄像机闭环和管理平台仍待开发。**
+
+2026-10-31 已取回 AutoDL RTX 3080 Ti 的 balanced / 960 / batch=8 / 30 轮训练结果，登记为 `dfire_expanded`；两个编辑器入口现默认启用此模型，其他版本保留。权重位于 `outputs/autodl_results/runs/dfire_expanded/experiment_001/train/weights/best.pt`，请保留该目录。云端训练和后续评测正常完成，内部结果见 [模型对比记录](docs/model_comparison.md)，不代表车棚预警能力。下文 2026-10-30 的准备和默认模型描述为当时记录，当前选择以入口配置为准。
+
+2026-10-30 按用户要求完成首次 [D-Fire 小烟雾微调实验](docs/dfire_small_smoke_finetune.md)：使用 FASDD_CV 筛选的 1,000 张含小烟雾图片和 200 张背景图，独立保存微调权重与对照结果。原始模型保留，编辑器入口已选择 `dfire_small_smoke`；内部数据集上的提升不代表真实车棚预警能力。
+
+同日已完成 [监控火烟训练数据扩充](docs/training_data_expansion.md)：下载并校验 8.5 GB 原包，合并去重及隔离后保留 73,855 张，包含小烟雾候选及反光、水汽等背景；提供全量与背景约占三分之一的训练清单，并通过小批量 CUDA 训练入口检查。该轮仅准备数据，未进行全量微调或替换现有模型。
+
+用户自行开训使用 `scripts/train_expanded_smoke.py`（默认 35,122 张、960、batch=8、最多 30 轮）；本机短时测速外推约 9–14 小时，具体规模、耗时限制及检验命令见 [训练报告与手动启动说明](docs/expanded_training_runbook.md)。
+
+[AutoDL 3080 Ti 部署说明](docs/autodl_3080ti.md) 对应的私有上传包已生成在 `outputs/cloud/`（约 3.2 GB，含校验文件）。Linux 路径重定位已用 WSL 小样本检查，云端安装与 3080 Ti 实测仍需在租到的实例上执行；本轮没有租赁、上传或启动云端训练。
 
 **改代码先看 [代码修改入口](docs/code_map.md)**：日常参数在 `scripts/run_models.py` / `scripts/run_video_baseline.py`；模型配置集中在 `sentinel/models/catalog.py`；推理流程、视频读写、告警评估已分目录。
 
@@ -64,7 +84,19 @@ python -m venv .venv
 
 自行准备一张图片 `samples/test.jpg` 或图片目录 `samples/images/` 后，运行：
 
-也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。当前启用四个 YOLO，设置以文件顶部为准。修改 `MODELS` 列表可选择模型，例如 `MODELS = ["early_fire_smoke"]` 只测试 YOLOv8n；列表中填写多个名称可同时比较。
+也可以在 PyCharm 中选择项目 `.venv\Scripts\python.exe` 解释器，打开 `scripts/run_models.py`，在文件顶部设置素材路径、模型和设备，然后直接点击运行，无需填写命令行参数。当前默认 `MODELS = ["dfire_expanded"]`；取消其他模型行的注释可同时比较。`SOURCE` 仍为原来的视频路径，可改成图片、图片目录或其他视频。
+
+云端模型的调用与旧模型相同：`run_models.py` 使用列表中的 `"dfire_expanded"`，视频专用入口 `run_video_baseline.py` 使用字典项 `"dfire_expanded": 960`。后者额外输出连续帧告警对照。参数仍在文件顶部调整，`CONFIDENCE=None` 时新模型使用库默认 0.25；视频入口沿用手动值 0.15，尚未针对车棚校准。`IOU=None` 时读取 checkpoint 的 0.7。两入口保存和播放结果的方式不变。
+
+```powershell
+# 直接运行编辑器入口，使用文件顶部的 SOURCE、MODELS 和其他设置
+.\.venv\Scripts\python.exe scripts/run_models.py
+.\.venv\Scripts\python.exe scripts/run_video_baseline.py
+
+# 命令行选择云端模型；不自动打开播放器
+.\.venv\Scripts\python.exe scripts/compare_models.py --source "video/Video Project 8.mp4" --models dfire_expanded --device 0 --stride 1 --save-images
+.\.venv\Scripts\python.exe scripts/video_baseline.py --source "video/Video Project 8.mp4" --models dfire_expanded --device 0 --conf 0.15 --save-images
+```
 
 比较 D-Fire 与 YOLO11m 时，可设置 `MODELS = ["firesmockdetect_y11m", "dfire_yolov8n"]`。车棚薄烟效果仍待测，不能宣称哪个模型更好。D-Fire 的数据集、作者原始模型及已下载第三方模型的区别见 [NOTICE.md](NOTICE.md)。
 
@@ -89,7 +121,7 @@ python -m venv .venv
 
 ## 视频基线与连续帧告警对照
 
-流式命令行入口 `scripts/video_baseline.py` 默认逐帧运行 YOLO11m、Early Fire and Smoke 和 D-Fire，各用对应上游示例阈值；编辑器入口 `scripts/run_video_baseline.py` 已启用全部五个模型。链路记录时间戳、完整检测框和预热/稳定态耗时，并自动比较连续 1、3、5 帧烟雾命中的规则。结果及人工标注模板保存在 `samples/video_results/run_00N/`；没有人工标签时不报告召回率、误报率或预警延迟。运行方法和指标定义见 [视频评测说明](docs/video_baseline.md)。
+流式命令行入口 `scripts/video_baseline.py` 默认逐帧运行 YOLO11m、Early Fire and Smoke 和 D-Fire，各用对应上游示例阈值；编辑器入口 `scripts/run_video_baseline.py` 当前启用本地微调版 `dfire_small_smoke`（960 输入），原模型仍可单独选择。链路记录时间戳、完整检测框和预热/稳定态耗时，并自动比较连续 1、3、5 帧烟雾命中的规则。结果及人工标注模板保存在 `samples/video_results/run_00N/`；没有人工标签时不报告召回率、误报率或预警延迟。运行方法和指标定义见 [视频评测说明](docs/video_baseline.md)。
 
 也可在 PyCharm 中打开 `scripts/run_video_baseline.py`，修改文件顶部的视频、模型等设置后直接运行。`SAVE_IMAGES` 和 `SHOW_IMAGES` 可控制保存和播放带框视频；视频编码需要 FFmpeg。
 

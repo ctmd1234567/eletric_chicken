@@ -59,6 +59,13 @@ def verify(path: Path, entry: dict) -> bool:
 
 def download(entry: dict, endpoint: str, force: bool = False) -> bool:
     dest = ROOT / entry["dest"]
+    if entry.get('provider') == 'local_training':
+        # 本地训练产物没有下载地址；--force 也不能覆盖它。
+        if verify(dest, entry):
+            print('  本地微调权重校验通过，无需下载')
+            return True
+        print('  本地实验权重缺失或不匹配；请恢复 experiment_001 的原产物，不能从上游下载替代')
+        return False
     if dest.exists() and not force and verify(dest, entry):
         print("  已存在且校验通过，跳过下载")
         return True
