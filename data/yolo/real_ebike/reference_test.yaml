@@ -1,0 +1,5 @@
+path: .
+test: images/test_reference
+names:
+  0: smoke
+  1: fire

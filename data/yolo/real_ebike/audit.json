@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "manual_images": 140,
+  "reference_test_images": 150,
+  "sources": {
+    "user_manual_previous": 40,
+    "user_manual_current": 100,
+    "reference_fasdd": 150
+  },
+  "empty_labels_by_group": {
+    "train_manual": 14,
+    "test_reference": 50
+  },
+  "boxes_by_group": {
+    "train_manual": {
+      "0": 142,
+      "1": 10
+    },
+    "test_reference": {
+      "1": 92,
+      "0": 121
+    }
+  },
+  "unique_image_sha256": 290,
+  "cross_group_exact_image_overlap": 0,
+  "image_and_label_hashes_verified": true,
+  "yolo_geometry_checked": true,
+  "event_independence": "not established",
+  "redistribution": "Public export requested by user; 140 manual-image publication permission confirmed 2026-11-01; FASDD retains CC BY-SA 4.0"
+}

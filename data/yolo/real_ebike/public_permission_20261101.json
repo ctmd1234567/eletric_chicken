@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-01",
+  "scope": "Public upload of the 140 manually reviewed images and labels to the existing GitHub repository",
+  "basis": "User explicitly confirmed in this chat: 已取得许可，可以公开上传图片和标签",
+  "verification": "User confirmation recorded; underlying permission documents were not independently inspected",
+  "other_sources": "The 150 FASDD reference pairs retain their source CC BY-SA 4.0 terms and attribution; no blanket relicensing"
+}

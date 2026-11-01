@@ -1,0 +1,7 @@
+{
+  "date": "2026-10-31",
+  "basis": "User explicitly confirmed training authorization in this chat.",
+  "redistribution": "No public redistribution authorization inferred",
+  "empty_labels": "User explicitly requested the 14 unlabelled frames be included as reviewed backgrounds",
+  "clipping": "User explicitly requested retaining the in-image portion of out-of-bounds boxes"
+}
