@@ -141,11 +141,11 @@ samples/video_results/run_编号/
 
 已公开的 [数据与标签目录](data/yolo/real_ebike/) 包含：
 
-- **140 张人工审核训练图及 YOLO 标签**，其中 14 张为用户确认无肉眼可辨认烟雾的背景帧。这组图片已参与定向训练。
+- **140 张人工审核训练图及 YOLO 标签**，其中 14 张为无肉眼可辨认烟雾的背景帧。这组图片已参与定向训练。
 - **150 张 FASDD 历史参考测试图及标签**，用于检查旧参考集上的性能变化；并非独立的电动车场景测试集。
-- 逐文件 SHA-256、来源清单、实验记录及发布授权确认。类别统一为 `0=smoke`、`1=fire`。
+- 逐文件 SHA-256、来源清单与实验记录。类别统一为 `0=smoke`、`1=fire`。
 
-目录名 `real_ebike` 不表示其中全部图片都是电动车事故。140 张图片的公开发布依据为用户确认的再分发许可；FASDD 参考图保留其 **CC BY-SA 4.0** 条件与署名。详情见 [数据说明与来源](data/yolo/real_ebike/README.md)。原始视频、其余训练集和完整训练产物不随仓库提供。
+目录名 `real_ebike` 不表示其中全部图片都是电动车事故。FASDD 参考图保留其 **CC BY-SA 4.0** 条件与署名，详情见 [数据说明与来源](data/yolo/real_ebike/README.md)。原始视频、其余训练集和完整训练产物不随仓库提供。
 
 ## 实验与评测
 
@@ -199,8 +199,6 @@ tests/                   回归测试
 
 欢迎通过 [Issues](https://github.com/ctmd1234567/eletric_chicken/issues) 反馈复现问题或讨论场景评测。提交问题时请附模型标识、运行参数、环境版本和可公开的日志；素材分享需具备相应权限。
 
-## 致谢与许可
+## 许可
 
-感谢 FireSmockDetect、Early Fire and Smoke、D-Fire、LwST-FSD、Safety Detection 及相关数据集作者提供的研究基础。具体版本、来源和许可记录见 [NOTICE.md](NOTICE.md) 与 [模型登记](sentinel/models/catalog.py)。
-
-项目采用 [AGPL-3.0](LICENSE)。第三方权重、数据与素材分别遵守其原有条款，公开提供模型或标注不改变原素材的使用条件。本项目当前为研究原型，实际预警能力仍需场景测试验证。
+项目采用 [AGPL-3.0](LICENSE)。第三方权重、数据与素材分别遵守其原有条款，具体来源与许可见 [NOTICE.md](NOTICE.md)。
