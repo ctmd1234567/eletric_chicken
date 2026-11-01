@@ -11,7 +11,6 @@ YOLO 烟火检测 · 场景定向微调 · 连续帧告警评测 · 强化学习
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](requirements.txt)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.8-EE4C2C?logo=pytorch&logoColor=white)](requirements.txt)
 [![YOLO](https://img.shields.io/badge/YOLO-Detection-111827)](sentinel/models/catalog.py)
-[![License](https://img.shields.io/badge/License-AGPL--3.0-blue)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Research_Prototype-0F766E)](#项目进展)
 
 [快速开始](#快速开始) · [模型权重](#模型与权重) · [数据与标注](#数据与标注) · [评测记录](#实验与评测) · [开发路线](#项目进展)
@@ -71,7 +70,7 @@ flowchart LR
 - [`dfire_small_smoke`](runs/dfire_fasdd_small_smoke/experiment_001/train/weights/best.pt)：此前的小烟雾微调版本。
 - 上游基线与时序模型：来源、哈希及输入配置统一维护在 [`sentinel/models/catalog.py`](sentinel/models/catalog.py)，实验记录见 [模型对比](docs/model_comparison.md)。
 
-三份本地微调最佳权重随仓库提供。需要额外模型时，使用下载脚本按模型标识获取并校验；各模型的许可与使用条件见 [NOTICE.md](NOTICE.md)。
+三份本地微调最佳权重随仓库提供。需要额外模型时，使用下载脚本按模型标识获取并校验。
 
 ## 快速开始
 
@@ -95,7 +94,7 @@ python -m venv .venv
 
 ### 2. 运行图片检测
 
-准备一张有权使用的图片，保存为 `samples/test.jpg`：
+准备一张图片，保存为 `samples/test.jpg`：
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/compare_models.py --source samples/test.jpg --models dfire_ludan_focused --device 0 --conf 0.25 --save-images
@@ -145,7 +144,7 @@ samples/video_results/run_编号/
 - **150 张 FASDD 历史参考测试图及标签**，用于检查旧参考集上的性能变化；并非独立的电动车场景测试集。
 - 逐文件 SHA-256、来源清单与实验记录。类别统一为 `0=smoke`、`1=fire`。
 
-目录名 `real_ebike` 不表示其中全部图片都是电动车事故。FASDD 参考图保留其 **CC BY-SA 4.0** 条件与署名，详情见 [数据说明与来源](data/yolo/real_ebike/README.md)。原始视频、其余训练集和完整训练产物不随仓库提供。
+目录名 `real_ebike` 不表示其中全部图片都是电动车事故，详情见 [数据说明](data/yolo/real_ebike/README.md)。原始视频、其余训练集和完整训练产物不随仓库提供。
 
 ## 实验与评测
 
@@ -197,8 +196,4 @@ tests/                   回归测试
 - 云端训练与环境迁移：[AutoDL 部署](docs/autodl_3080ti.md)
 - 后续评测设计：[恶劣天气与鲁棒性](docs/weather_robustness.md)
 
-欢迎通过 [Issues](https://github.com/ctmd1234567/eletric_chicken/issues) 反馈复现问题或讨论场景评测。提交问题时请附模型标识、运行参数、环境版本和可公开的日志；素材分享需具备相应权限。
-
-## 许可
-
-项目采用 [AGPL-3.0](LICENSE)。第三方权重、数据与素材分别遵守其原有条款，具体来源与许可见 [NOTICE.md](NOTICE.md)。
+欢迎通过 [Issues](https://github.com/ctmd1234567/eletric_chicken/issues) 反馈复现问题或讨论场景评测。提交问题时请附模型标识、运行参数、环境版本和相关日志。
