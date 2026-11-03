@@ -4,7 +4,9 @@ import unittest
 import cv2
 import numpy as np
 
-from sentinel.augmentation.das_de import Evaluation, optimize_das_de
+from sentinel.augmentation.das_de import (
+    Evaluation, Individual, _is_better, optimize_das_de,
+)
 from sentinel.augmentation.mls import local_contour_controls, warp_local_instance
 from sentinel.augmentation.mscea import (
     MicroscaleRegion,
@@ -42,6 +44,15 @@ class MicroscaleRegionTests(unittest.TestCase):
         self.assertAlmostEqual(parts["background_false_positive"], 0.2)
         self.assertAlmostEqual(parts["mask_area"], (1.5 - 1.4) / 1.4)
         self.assertAlmostEqual(parts["bottom_edge"], 1.0)
+
+    def test_objective_and_constraint_priority_comparisons(self):
+        objective_winner = Individual(np.zeros(1), Evaluation(1.0, 0.8))
+        constraint_winner = Individual(np.zeros(1), Evaluation(2.0, 0.1))
+        self.assertTrue(_is_better(objective_winner, constraint_winner, "OP-C"))
+        self.assertTrue(_is_better(constraint_winner, objective_winner, "CP-C"))
+        feasible = Individual(np.zeros(1), Evaluation(3.0, 0.0))
+        infeasible = Individual(np.zeros(1), Evaluation(0.1, 0.01))
+        self.assertTrue(_is_better(feasible, infeasible, "OP", epsilon=0.0))
 
     def test_das_de_respects_evaluation_budget_and_is_reproducible(self):
         def evaluate(x):
@@ -89,6 +100,7 @@ class MLSOptimizationTests(unittest.TestCase):
         self.assertEqual(result.control_points, len(contour) + 4 * 12 - 4)
         self.assertEqual(result.mask.shape, mask.shape)
         self.assertGreater(result.area_ratio, 0)
+        self.assertAlmostEqual(result.bbox_area_ratio, 1.0, places=2)
 
     def test_optimizer_returns_only_feasible_candidates(self):
         image, mask = self._sample()
