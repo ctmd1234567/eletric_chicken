@@ -196,7 +196,9 @@ def optimize_mls_instance(
     radius = np.tile(np.asarray([alpha * roi_width, alpha * roi_height]), len(contour))
     region = MicroscaleRegion(np.zeros(radius.size, dtype=np.float64), radius)
 
-    feasible_archive: list[tuple[np.ndarray, Evaluation]] = []
+    # Keep only the best top_k feasible images in memory. Retaining every
+    # feasible 960px candidate can consume several gigabytes per source image.
+    feasible_archive: dict[bytes, AugmentedCandidate] = {}
 
     def evaluate(offset_vector):
         offsets = np.asarray(offset_vector, dtype=np.float64).reshape(-1, 2)
@@ -245,7 +247,19 @@ def optimize_mls_instance(
     def remember_feasible(vector, evaluation):
         if not isinstance(evaluation.payload, dict) or "warp" not in evaluation.payload:
             return
-        feasible_archive.append((vector.copy(), evaluation))
+        payload = evaluation.payload
+        key = np.round(vector, 7).tobytes()
+        feasible_archive[key] = AugmentedCandidate(
+            offsets=vector.reshape(-1, 2).copy(),
+            warp=payload["warp"],
+            diversity=float(payload["diversity"]),
+            confidence=float(payload["confidence"]),
+            background_confidence=float(payload["background_confidence"]),
+            constraint_components=dict(payload["constraint_components"]),
+        )
+        if len(feasible_archive) > top_k:
+            worst_key = min(feasible_archive, key=lambda item: feasible_archive[item].diversity)
+            del feasible_archive[worst_key]
 
     optimizer = optimize_das_de(
         evaluate,
@@ -258,21 +272,10 @@ def optimize_mls_instance(
         feasible_callback=remember_feasible,
     )
 
-    # The DAS-DE population is not an elitist archive of every feasible trial.
-    # Preserve all feasible evaluations so top-k output cannot be lost later.
-    unique: dict[bytes, AugmentedCandidate] = {}
-    for vector, evaluation in feasible_archive:
-        payload = evaluation.payload
-        key = np.round(vector, 7).tobytes()
-        unique[key] = AugmentedCandidate(
-            offsets=vector.reshape(-1, 2).copy(),
-            warp=payload["warp"],
-            diversity=float(payload["diversity"]),
-            confidence=float(payload["confidence"]),
-            background_confidence=float(payload["background_confidence"]),
-            constraint_components=dict(payload["constraint_components"]),
-        )
-    candidates = sorted(unique.values(), key=lambda item: item.diversity, reverse=True)[:top_k]
+    # The callback maintains a bounded elitist archive of feasible candidates.
+    candidates = sorted(
+        feasible_archive.values(), key=lambda item: item.diversity, reverse=True
+    )[:top_k]
     return MSCEAInstanceResult(
         candidates=candidates,
         optimizer=optimizer,
