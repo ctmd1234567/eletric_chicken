@@ -324,6 +324,11 @@ def generate(
                 raise ValueError(f"cannot read source image: {image_path}")
             detections, feature_maps = evaluator.predict(image)
             for index in indices:
+                source_mask = cv2.imread(str(mask_by_row[index]), cv2.IMREAD_GRAYSCALE)
+                if source_mask is None or source_mask.shape != image.shape[:2]:
+                    raise ValueError(
+                        f"source mask/image size mismatch for manifest row {index + 1}"
+                    )
                 bbox = bbox_by_row[index]
                 level = evaluator.level_for_bbox(bbox)
                 feature_by_row[index] = evaluator.feature_for_bbox(
@@ -387,6 +392,9 @@ def generate(
             mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
             if image is None or mask is None:
                 skipped.append({"manifest_row": index, "reason": "source image/mask unreadable"})
+                continue
+            if mask.shape != image.shape[:2]:
+                skipped.append({"manifest_row": index, "reason": "source mask/image size mismatch"})
                 continue
             label_lines, parsed, nonempty_indices = _read_yolo_label(label_path)
             target_index = int(rows[index]["target_label_index"])
