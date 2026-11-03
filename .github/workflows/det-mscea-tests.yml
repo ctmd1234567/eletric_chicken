@@ -1,0 +1,37 @@
+name: Det-MSCEA unit tests
+
+on:
+  push:
+    branches:
+      - feature/det-mscea-full
+    paths:
+      - "sentinel/augmentation/**"
+      - "scripts/generate_det_mscea.py"
+      - "tests/test_mscea_optimizer.py"
+      - "tests/test_mscea_adapter.py"
+      - "scripts/prepare_mls_b3.py"
+      - "tests/test_mls_augmentation.py"
+      - ".github/workflows/det-mscea-tests.yml"
+  pull_request:
+    paths:
+      - "sentinel/augmentation/**"
+      - "scripts/generate_det_mscea.py"
+      - "tests/test_mscea_optimizer.py"
+      - "tests/test_mscea_adapter.py"
+      - "scripts/prepare_mls_b3.py"
+      - "tests/test_mls_augmentation.py"
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip numpy opencv-python-headless pyyaml
+      - name: Compile Det-MSCEA entry point
+        run: python -m py_compile scripts/generate_det_mscea.py sentinel/augmentation/das_de.py sentinel/augmentation/mscea.py sentinel/augmentation/mls.py
+      - name: Run MLS and MSCEA tests
+        run: python -m unittest tests.test_mls_augmentation tests.test_mscea_optimizer tests.test_mscea_adapter -v

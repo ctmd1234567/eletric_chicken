@@ -1,0 +1,22 @@
+{
+  "sources": [
+    {
+      "name": "DAS",
+      "doi": "10.1109/TEVC.2023.3302897",
+      "url": "https://www2.scut.edu.cn/_upload/article/files/74/7c/392c47d045e3948f22ded94344af/3ca6bdd1-d002-4db1-b3a4-8be6ee255a1a.pdf",
+      "status": "author_manuscript_read"
+    },
+    {
+      "name": "FROFI",
+      "doi": "10.1109/TCYB.2015.2493239",
+      "url": "https://bingchuanwang.github.io/files/FROFI.pdf",
+      "status": "author_manuscript_read"
+    },
+    {
+      "name": "MSCEA",
+      "doi": "10.1109/TEVC.2026.3706679",
+      "status": "full_manuscript_not_obtained",
+      "notes": "Only title/author introduction located; no exact reproduction claim."
+    }
+  ]
+}

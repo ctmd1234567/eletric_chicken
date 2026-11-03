@@ -17,6 +17,7 @@ class WarpResult:
     bbox_xyxy: tuple[int, int, int, int]
     roi_xyxy: tuple[int, int, int, int]
     area_ratio: float
+    bbox_area_ratio: float
     bottom_shift_ratio: float
     control_points: int
 
@@ -121,6 +122,53 @@ def _mls_affine_map(
     return mapped.astype(np.float32)
 
 
+def _bottom_anchor_scale(
+    points: np.ndarray,
+    mask_bbox: tuple[int, int, int, int],
+    bottom_anchor_strength: float,
+) -> np.ndarray:
+    if not 0 <= bottom_anchor_strength <= 1:
+        raise ValueError("bottom_anchor_strength must be in [0, 1]")
+    _, y1, _, y2 = mask_bbox
+    mask_height = max(1.0, float(y2 - y1))
+    bottom_start = y2 - 0.2 * mask_height
+    ramp = np.clip((points[:, 1] - bottom_start) / max(1.0, 0.2 * mask_height), 0, 1)
+    return 1.0 - bottom_anchor_strength * ramp
+
+
+def local_contour_controls(
+    mask: np.ndarray,
+    *,
+    roi_scale: float = 2.0,
+    contour_points: int = 32,
+) -> tuple[np.ndarray, tuple[int, int, int, int], tuple[int, int, int, int]]:
+    """Return deterministic local contour controls, local bbox, and global ROI."""
+    binary = (np.asarray(mask) > 0).astype(np.uint8)
+    if binary.ndim != 2:
+        raise ValueError("mask must be a single-channel image")
+    x1, y1, x2, y2 = mask_to_bbox(binary)
+    if roi_scale <= 1:
+        raise ValueError("roi_scale must be greater than 1")
+    height, width = binary.shape
+    cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+    roi_w = max(x2 - x1 + 2, int(math.ceil((x2 - x1) * roi_scale)))
+    roi_h = max(y2 - y1 + 2, int(math.ceil((y2 - y1) * roi_scale)))
+    rx1 = max(0, int(math.floor(cx - roi_w / 2)))
+    ry1 = max(0, int(math.floor(cy - roi_h / 2)))
+    rx2 = min(width, rx1 + roi_w)
+    ry2 = min(height, ry1 + roi_h)
+    rx1 = max(0, rx2 - roi_w)
+    ry1 = max(0, ry2 - roi_h)
+    roi_w, roi_h = rx2 - rx1, ry2 - ry1
+    if roi_w < 8 or roi_h < 8:
+        raise ValueError("Local ROI is too small for stable MLS")
+    if x1 < rx1 or y1 < ry1 or x2 > rx2 or y2 > ry2:
+        raise ValueError("Instance mask does not fit inside the selected ROI")
+    local_bbox = (x1 - rx1, y1 - ry1, x2 - rx1, y2 - ry1)
+    contour = _sample_contour(binary[ry1:ry2, rx1:rx2], contour_points)
+    return contour, local_bbox, (rx1, ry1, rx2, ry2)
+
+
 def _random_contour_targets(
     points: np.ndarray,
     mask_bbox: tuple[int, int, int, int],
@@ -168,6 +216,8 @@ def warp_local_instance(
     max_bottom_shift_ratio: float = 0.05,
     blend_radius: int = 8,
     blend_sigma: float = 3.0,
+    contour_offsets: np.ndarray | None = None,
+    validate_geometry: bool = True,
 ) -> WarpResult:
     """Warp one masked smoke instance inside a local ROI and preserve its bbox.
 
@@ -198,34 +248,40 @@ def warp_local_instance(
     if blend_radius < 0 or blend_sigma <= 0:
         raise ValueError("blend_radius must be nonnegative and blend_sigma positive")
 
-    height, width = binary.shape
-    cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
-    roi_w = max(x2 - x1 + 2, int(math.ceil((x2 - x1) * roi_scale)))
-    roi_h = max(y2 - y1 + 2, int(math.ceil((y2 - y1) * roi_scale)))
-    rx1 = max(0, int(math.floor(cx - roi_w / 2)))
-    ry1 = max(0, int(math.floor(cy - roi_h / 2)))
-    rx2 = min(width, rx1 + roi_w)
-    ry2 = min(height, ry1 + roi_h)
-    rx1 = max(0, rx2 - roi_w)
-    ry1 = max(0, ry2 - roi_h)
+    contour, local_bbox, roi_xyxy = local_contour_controls(
+        binary, roi_scale=roi_scale, contour_points=contour_points
+    )
+    rx1, ry1, rx2, ry2 = roi_xyxy
     roi_w, roi_h = rx2 - rx1, ry2 - ry1
-    if roi_w < 8 or roi_h < 8:
-        raise ValueError("Local ROI is too small for stable MLS")
-    if x1 < rx1 or y1 < ry1 or x2 > rx2 or y2 > ry2:
-        raise ValueError("Instance mask does not fit inside the selected ROI")
-
     image_roi = image[ry1:ry2, rx1:rx2]
     mask_roi = binary[ry1:ry2, rx1:rx2]
-    local_bbox = (x1 - rx1, y1 - ry1, x2 - rx1, y2 - ry1)
-    contour = _sample_contour(mask_roi, contour_points)
     generator = rng if rng is not None else np.random.default_rng()
-    moved = _random_contour_targets(
-        contour, local_bbox, roi_w, roi_h, generator,
-        alpha=alpha, bottom_anchor_strength=bottom_anchor_strength,
-    )
+    if contour_offsets is None:
+        moved = _random_contour_targets(
+            contour, local_bbox, roi_w, roi_h, generator,
+            alpha=alpha, bottom_anchor_strength=bottom_anchor_strength,
+        )
+    else:
+        offsets = np.asarray(contour_offsets, dtype=np.float32).reshape(-1, 2)
+        if offsets.shape != contour.shape or not np.isfinite(offsets).all():
+            raise ValueError(
+                f"contour_offsets must have shape {contour.shape}, got {offsets.shape}"
+            )
+        scale = _bottom_anchor_scale(contour, local_bbox, bottom_anchor_strength)
+        moved = contour + offsets * scale[:, None]
     anchors = _boundary_anchors(roi_w, roi_h, boundary_points_per_edge)
+    # Expanded search neighborhoods must not move controls outside the ROI.
+    moved = np.clip(moved, [0, 0], [roi_w - 1, roi_h - 1])
+    # A contour touching the image/ROI boundary can coincide with a fixed
+    # anchor. Give that location one consistent (fixed) interpolation target.
+    coincident = np.any(np.all(
+        np.isclose(contour[:, None, :], anchors[None, :, :], atol=1e-5, rtol=0),
+        axis=2), axis=1)
+    contour, moved = contour[~coincident], moved[~coincident]
     source_controls = np.vstack((contour, anchors))
     target_controls = np.vstack((moved, anchors))
+    if len(np.unique(target_controls, axis=0)) != len(target_controls):
+        raise ValueError("Deformation collapsed distinct controls onto one target")
 
     grid_x, grid_y = np.meshgrid(
         np.arange(roi_w, dtype=np.float32),
@@ -249,10 +305,13 @@ def warp_local_instance(
     old_area = int(binary.sum())
     new_area = int(warped_mask_roi.sum())
     area_ratio = new_area / max(1, old_area)
+    old_bbox_area = max(1, (local_bbox[2] - local_bbox[0]) * (local_bbox[3] - local_bbox[1]))
+    new_bbox_area = max(1, (new_local_bbox[2] - new_local_bbox[0]) * (new_local_bbox[3] - new_local_bbox[1]))
+    bbox_area_ratio = new_bbox_area / old_bbox_area
     bottom_shift = abs(new_local_bbox[3] - local_bbox[3]) / roi_h
-    if not area_ratio_range[0] <= area_ratio <= area_ratio_range[1]:
+    if validate_geometry and not area_ratio_range[0] <= area_ratio <= area_ratio_range[1]:
         raise ValueError(f"Mask area ratio {area_ratio:.3f} is outside allowed range")
-    if bottom_shift > max_bottom_shift_ratio:
+    if validate_geometry and bottom_shift > max_bottom_shift_ratio:
         raise ValueError(f"Bottom-edge shift {bottom_shift:.3f} exceeds allowed range")
 
     union_mask = np.maximum(mask_roi, warped_mask_roi)
@@ -285,6 +344,7 @@ def warp_local_instance(
         bbox_xyxy=(bx1 + rx1, by1 + ry1, bx2 + rx1, by2 + ry1),
         roi_xyxy=(rx1, ry1, rx2, ry2),
         area_ratio=float(area_ratio),
+        bbox_area_ratio=float(bbox_area_ratio),
         bottom_shift_ratio=float(bottom_shift),
         control_points=int(len(source_controls)),
     )
