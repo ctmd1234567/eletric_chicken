@@ -17,6 +17,7 @@ class WarpResult:
     bbox_xyxy: tuple[int, int, int, int]
     roi_xyxy: tuple[int, int, int, int]
     area_ratio: float
+    bbox_area_ratio: float
     bottom_shift_ratio: float
     control_points: int
 
@@ -294,6 +295,9 @@ def warp_local_instance(
     old_area = int(binary.sum())
     new_area = int(warped_mask_roi.sum())
     area_ratio = new_area / max(1, old_area)
+    old_bbox_area = max(1, (local_bbox[2] - local_bbox[0]) * (local_bbox[3] - local_bbox[1]))
+    new_bbox_area = max(1, (new_local_bbox[2] - new_local_bbox[0]) * (new_local_bbox[3] - new_local_bbox[1]))
+    bbox_area_ratio = new_bbox_area / old_bbox_area
     bottom_shift = abs(new_local_bbox[3] - local_bbox[3]) / roi_h
     if validate_geometry and not area_ratio_range[0] <= area_ratio <= area_ratio_range[1]:
         raise ValueError(f"Mask area ratio {area_ratio:.3f} is outside allowed range")
@@ -330,6 +334,7 @@ def warp_local_instance(
         bbox_xyxy=(bx1 + rx1, by1 + ry1, bx2 + rx1, by2 + ry1),
         roi_xyxy=(rx1, ry1, rx2, ry2),
         area_ratio=float(area_ratio),
+        bbox_area_ratio=float(bbox_area_ratio),
         bottom_shift_ratio=float(bottom_shift),
         control_points=int(len(source_controls)),
     )
