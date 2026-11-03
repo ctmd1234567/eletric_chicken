@@ -108,7 +108,14 @@ def _bounds_arrays(bounds):
 
 
 def _repair(x, lower, upper, region=None):
-    x = np.clip(np.asarray(x, dtype=np.float64), lower, upper)
+    x = np.asarray(x, dtype=np.float64)
+    if region is not None and hasattr(region, "bounds"):
+        dynamic_lower, dynamic_upper = region.bounds
+        x = np.clip(x, dynamic_lower, dynamic_upper)
+        x = np.asarray(region.repair(x), dtype=np.float64)
+        dynamic_lower, dynamic_upper = region.bounds
+        return np.clip(x, dynamic_lower, dynamic_upper)
+    x = np.clip(x, lower, upper)
     if region is not None:
         x = np.asarray(region.repair(x), dtype=np.float64)
     return np.clip(x, lower, upper)
@@ -268,7 +275,11 @@ def _frofi_generation(population, evaluate, rng, lower, upper, region,
         worst_idx = max(range(len(updated)), key=lambda i: updated[i].g)
         mutant = updated[source_idx].x.copy()
         dim = int(rng.integers(mutant.size))
-        mutant[dim] = rng.uniform(lower[dim], upper[dim])
+        mutation_lower, mutation_upper = (
+            region.bounds if region is not None and hasattr(region, "bounds")
+            else (lower, upper)
+        )
+        mutant[dim] = rng.uniform(mutation_lower[dim], mutation_upper[dim])
         mutant = _repair(mutant, lower, upper, region)
         child = _evaluate(mutant, evaluate, region, feasible_callback)
         used += 1
