@@ -1,0 +1,2 @@
+{"image":"images/frame_001.jpg","mask":"masks/frame_001_smoke_0.png","label":"labels/frame_001.txt","target_label_index":0}
+{"image":"images/frame_002.jpg","mask":"masks/frame_002_smoke_1.png","label":"labels/frame_002.txt","target_label_index":1}
