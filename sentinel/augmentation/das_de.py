@@ -326,10 +326,17 @@ def optimize_das_de(
                      else int(correlation_evals))
     cor_budget = min(cor_budget, max_evals)
 
+    # Sample the complete initial population inside the original microscale
+    # neighborhood before any feasible point is allowed to expand the region.
+    initial_vectors = [_sample(rng, lower, upper, region) for _ in range(half)]
     initial = [
-        _evaluate(_sample(rng, lower, upper, region), evaluate, region, feasible_callback)
-        for _ in range(half)
+        _evaluate(vector, evaluate, None, feasible_callback)
+        for vector in initial_vectors
     ]
+    if region is not None:
+        for item in initial:
+            if item.feasible:
+                region.expand(item.x)
     p1 = [item.clone() for item in initial]
     p2 = [item.clone() for item in initial]
     initial_f = [item.f for item in initial]
