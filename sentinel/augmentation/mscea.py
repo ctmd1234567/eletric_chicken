@@ -71,9 +71,11 @@ class MicroscaleRegion:
         center = np.asarray(feasible_vector, dtype=np.float64).reshape(-1)
         if center.shape != self.origin.shape or not np.isfinite(center).all():
             raise ValueError("feasible vector has invalid shape or values")
-        if self.contains(center):
-            # A feasible point already inside an existing box does not enlarge
-            # the union; it is still retained by the optimizer's feasible archive.
+        # Add a neighborhood around each distinct feasible point, even when
+        # its center lies inside an older box: the new box can still extend the
+        # union beyond that older box.
+        if any(np.all(np.abs(center - old) <= 1e-6 * self.radius)
+               for old in self.centers):
             return
         if len(self.centers) >= self.max_boxes:
             return
