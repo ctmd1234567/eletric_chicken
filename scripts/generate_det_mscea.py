@@ -172,6 +172,7 @@ class FrozenYOLOFeatureEvaluator:
                 for box, score, class_id in zip(xyxy, conf, cls)
             ]
         maps = [feature.detach() for feature in self.feature_maps]
+        self.feature_maps = None
         return detections, maps
 
     def level_for_bbox(self, bbox):
