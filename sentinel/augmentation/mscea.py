@@ -128,7 +128,7 @@ def detection_constraint_violation(
     area_ratio_range: tuple[float, float] = (0.70, 1.40),
     max_bottom_shift_ratio: float = 0.05,
 ) -> tuple[float, dict[str, float]]:
-    """Return normalized C1-C4 violations; feasibility requires every Cj == 0."""
+    """Return normalized C1-C4 violations; area_ratio is warped/original bbox area."""
     values = (original_confidence, candidate_confidence, background_confidence,
               area_ratio, bottom_shift_ratio)
     if not all(np.isfinite(value) for value in values):
@@ -219,7 +219,7 @@ def optimize_mls_instance(
                 original_confidence=original_confidence,
                 candidate_confidence=float(metrics["confidence"]),
                 background_confidence=float(metrics["background_confidence"]),
-                area_ratio=warped.area_ratio,
+                area_ratio=warped.bbox_area_ratio,
                 bottom_shift_ratio=warped.bottom_shift_ratio,
                 background_threshold=background_threshold,
                 area_ratio_range=area_ratio_range,
@@ -232,6 +232,8 @@ def optimize_mls_instance(
                 "confidence": float(metrics["confidence"]),
                 "background_confidence": float(metrics["background_confidence"]),
                 "constraint_components": components,
+                "mask_area_ratio": warped.area_ratio,
+                "bbox_area_ratio": warped.bbox_area_ratio,
             }
             return Evaluation(objective=-diversity, violation=violation, payload=payload)
         except (ValueError, KeyError, FloatingPointError) as exc:
