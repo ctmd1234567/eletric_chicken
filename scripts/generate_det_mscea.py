@@ -202,8 +202,10 @@ class FrozenYOLOFeatureEvaluator:
         y1 = int(np.floor((bbox[1] * ratio + pad_y) * sy))
         x2 = int(np.ceil((bbox[2] * ratio + pad_x) * sx))
         y2 = int(np.ceil((bbox[3] * ratio + pad_y) * sy))
-        x1, x2 = max(0, x1), min(feature_width, max(x1 + 1, x2))
-        y1, y2 = max(0, y1), min(feature_height, max(y1 + 1, y2))
+        x1 = min(feature_width - 1, max(0, x1))
+        y1 = min(feature_height - 1, max(0, y1))
+        x2 = min(feature_width, max(x1 + 1, x2))
+        y2 = min(feature_height, max(y1 + 1, y2))
         crop = feature[:, :, y1:y2, x1:x2]
         if crop.numel() == 0:
             raise ValueError("instance ROI maps to an empty feature crop")
