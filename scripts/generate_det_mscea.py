@@ -252,6 +252,8 @@ def generate(
     contour_points=32,
     seed=20261103,
     top_k=3,
+    min_source_confidence=0.05,
+    max_source_confidence=0.50,
 ):
     manifest = manifest.resolve()
     weights = weights.resolve()
@@ -262,9 +264,16 @@ def generate(
         raise ValueError(f"output already exists; choose a new directory: {output}")
     if max_instances < 1 or max_reference_instances < 1:
         raise ValueError("max_instances and max_reference_instances must be positive")
+    if not 0 <= min_source_confidence <= max_source_confidence <= 1:
+        raise ValueError("source confidence interval must satisfy 0 <= min <= max <= 1")
 
     rows = _load_manifest(manifest)
-    target_indices = list(range(min(max_instances, len(rows))))
+    target_rng = np.random.default_rng(seed)
+    target_indices = sorted(
+        int(x) for x in target_rng.choice(
+            len(rows), size=min(max_instances, len(rows)), replace=False
+        )
+    )
     level_by_row = {}
     bbox_by_row = {}
     mask_by_row = {}
@@ -323,6 +332,24 @@ def generate(
                     detections_by_row[index] = detections
             del feature_maps
 
+        eligible_target_indices = [
+            index for index in target_indices
+            if confidence_by_row.get(index) is not None
+            and min_source_confidence <= confidence_by_row[index] <= max_source_confidence
+        ]
+        skipped = [
+            {
+                "manifest_row": index,
+                "reason": (
+                    "no baseline smoke detection matched the source mask bbox"
+                    if confidence_by_row.get(index) is None
+                    else "source confidence outside the configured hard-instance interval"
+                ),
+                "source_confidence": confidence_by_row.get(index),
+            }
+            for index in target_indices if index not in eligible_target_indices
+        ]
+
         feature_banks = {}
         for level in range(len(evaluator.strides)):
             vectors = [
@@ -343,16 +370,10 @@ def generate(
         for folder in (images_dir, labels_dir, masks_dir):
             folder.mkdir(parents=True, exist_ok=True)
 
-        records, skipped = [], []
-        for order, index in enumerate(target_indices, start=1):
-            original_conf = confidence_by_row.get(index)
+        records = []
+        for order, index in enumerate(eligible_target_indices, start=1):
+            original_conf = confidence_by_row[index]
             level = evaluator.level_for_bbox(bbox_by_row[index])
-            if original_conf is None:
-                skipped.append({
-                    "manifest_row": index,
-                    "reason": "no baseline smoke detection matched the source mask bbox",
-                })
-                continue
             if level not in feature_banks:
                 skipped.append({"manifest_row": index, "reason": "empty feature-size bucket"})
                 continue
@@ -481,7 +502,8 @@ def generate(
             "weights": str(weights),
             "weights_sha256": _sha256(weights),
             "source_rows": len(rows),
-            "target_instances": len(target_indices),
+            "target_instances_sampled": len(target_indices),
+            "target_instances_eligible": len(eligible_target_indices),
             "reference_instances": len(reference_indices),
             "generated": len(records),
             "skipped": skipped,
@@ -491,6 +513,8 @@ def generate(
                 "correlation_evals": correlation_evals, "alpha": alpha,
                 "roi_scale": roi_scale, "contour_points": contour_points,
                 "seed": seed, "top_k": top_k,
+                "min_source_confidence": min_source_confidence,
+                "max_source_confidence": max_source_confidence,
             },
             "limitations": [
                 "This is a detection-task adaptation, not a reproduction of the classification experiments.",
@@ -529,6 +553,8 @@ def main(argv=None):
     parser.add_argument("--contour-points", type=int, default=32)
     parser.add_argument("--seed", type=int, default=20261103)
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument("--min-source-confidence", type=float, default=0.05)
+    parser.add_argument("--max-source-confidence", type=float, default=0.50)
     args = parser.parse_args(argv)
     generate(
         args.manifest, args.weights, args.out,
@@ -539,6 +565,8 @@ def main(argv=None):
         correlation_evals=args.correlation_evals, alpha=args.alpha,
         roi_scale=args.roi_scale, contour_points=args.contour_points,
         seed=args.seed, top_k=args.top_k,
+        min_source_confidence=args.min_source_confidence,
+        max_source_confidence=args.max_source_confidence,
     )
     return 0
 
