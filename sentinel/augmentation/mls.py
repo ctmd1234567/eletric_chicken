@@ -270,8 +270,18 @@ def warp_local_instance(
         scale = _bottom_anchor_scale(contour, local_bbox, bottom_anchor_strength)
         moved = contour + offsets * scale[:, None]
     anchors = _boundary_anchors(roi_w, roi_h, boundary_points_per_edge)
+    # Expanded search neighborhoods must not move controls outside the ROI.
+    moved = np.clip(moved, [0, 0], [roi_w - 1, roi_h - 1])
+    # A contour touching the image/ROI boundary can coincide with a fixed
+    # anchor. Give that location one consistent (fixed) interpolation target.
+    coincident = np.any(np.all(
+        np.isclose(contour[:, None, :], anchors[None, :, :], atol=1e-5, rtol=0),
+        axis=2), axis=1)
+    contour, moved = contour[~coincident], moved[~coincident]
     source_controls = np.vstack((contour, anchors))
     target_controls = np.vstack((moved, anchors))
+    if len(np.unique(target_controls, axis=0)) != len(target_controls):
+        raise ValueError("Deformation collapsed distinct controls onto one target")
 
     grid_x, grid_y = np.meshgrid(
         np.arange(roi_w, dtype=np.float32),

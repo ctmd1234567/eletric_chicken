@@ -64,11 +64,41 @@ def build(base_data: Path, generated_root: Path, output: Path, *, repeat=1):
     if not records:
         raise ValueError("MLS manifest contains no generated samples")
     augmented = []
+    checked_banks = set()
     for record in records:
+        if record.get("algorithm") == "det_mscea":
+            review = record.get("human_review", {})
+            if (review.get("status") != "approved" or not review.get("reviewer", "").strip()
+                    or not review.get("notes", "").strip()):
+                raise ValueError("Det-MSCEA sample requires approved human_review with reviewer and notes")
+            source = _resolve(generated_root, record["source_image"])
+            if source not in base_train or source in base_val or source in base_test:
+                raise ValueError("Det-MSCEA source must belong exclusively to the base training split")
+            bank = _resolve(generated_root, record["reference_bank"])
+            bank_key = (bank, record["reference_bank_sha256"])
+            if bank_key not in checked_banks:
+                if _sha256(bank) != bank_key[1]:
+                    raise ValueError("Det-MSCEA reference bank hash mismatch")
+                for reference in json.loads(bank.read_text(encoding="utf-8")):
+                    reference_image = _resolve(generated_root, reference["image"])
+                    if (reference_image not in base_train or reference_image in base_val
+                            or reference_image in base_test):
+                        raise ValueError("Det-MSCEA reference bank must use training images exclusively")
+                    if _sha256(reference_image) != reference["image_sha256"]:
+                        raise ValueError("Det-MSCEA reference image hash mismatch")
+                checked_banks.add(bank_key)
         image = _resolve(generated_root, record["image"])
         label = _resolve(generated_root, record["label"])
         if not image.is_file() or not label.is_file():
             raise FileNotFoundError(f"Generated image/label pair is incomplete: {image}")
+        if record.get("algorithm") == "det_mscea":
+            for key in ("image", "mask", "label"):
+                artifact = _resolve(generated_root, record[key])
+                if _sha256(artifact) != record.get("output_sha256", {}).get(key):
+                    raise ValueError(f"Det-MSCEA reviewed {key} hash mismatch")
+                source = _resolve(generated_root, record[f"source_{key}"])
+                if _sha256(source) != record.get("source_sha256", {}).get(key):
+                    raise ValueError(f"Det-MSCEA source {key} hash mismatch")
         image_parts = list(image.parts)
         try:
             index = len(image_parts) - 1 - image_parts[::-1].index("images")

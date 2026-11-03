@@ -34,7 +34,7 @@ class Individual:
 
     @property
     def feasible(self) -> bool:
-        return self.g <= 1e-12
+        return self.g == 0.0
 
     def clone(self) -> "Individual":
         return Individual(self.x.copy(), self.evaluation)
@@ -72,26 +72,25 @@ def _coerce_evaluation(value: Any) -> Evaluation:
 
 def _is_better(a: Individual, b: Individual, rule: str, epsilon: float = 0.0) -> bool:
     """Compare a and b using OP-C, CP-C, or epsilon-OP."""
-    eps = 1e-12
     if rule == "OP-C":
-        if a.f < b.f - eps:
+        if a.f < b.f:
             return True
-        if abs(a.f - b.f) <= eps:
-            return a.g < b.g - eps
+        if a.f == b.f:
+            return a.g < b.g
         return False
     if rule == "CP-C":
-        if a.g < b.g - eps:
+        if a.g < b.g:
             return True
-        if abs(a.g - b.g) <= eps:
-            return a.f < b.f - eps
+        if a.g == b.g:
+            return a.f < b.f
         return False
     if rule == "OP":
-        a_inside, b_inside = a.g <= epsilon + eps, b.g <= epsilon + eps
+        a_inside, b_inside = a.g <= epsilon, b.g <= epsilon
         if a_inside and b_inside:
-            return a.f < b.f - eps
-        if abs(a.g - b.g) <= eps:
-            return a.f < b.f - eps
-        return a.g < b.g - eps
+            return a.f < b.f
+        if a.g == b.g:
+            return a.f < b.f
+        return a.g < b.g
     raise ValueError(f"Unknown comparison rule: {rule}")
 
 
@@ -253,13 +252,14 @@ def _frofi_generation(population, evaluate, rng, lower, upper, region,
         elif child.f < population[i].f - 1e-12:
             archive.append(child)
 
-    if archive and used < max_evals - current_evals:
+    # Replacement uses already evaluated individuals, including at the budget edge.
+    if archive:
         mrn = max_replacements or max(5, len(updated[0].x) // 2)
         mrn = min(max(1, mrn), len(updated))
         order = sorted(range(len(updated)), key=lambda i: updated[i].f, reverse=True)
         groups = np.array_split(np.asarray(order, dtype=int), mrn)
         for group in groups:
-            if not archive or used >= max_evals - current_evals:
+            if not archive:
                 break
             target_idx = max(group.tolist(), key=lambda i: updated[i].g)
             archive_idx = min(range(len(archive)), key=lambda i: archive[i].g)
@@ -321,6 +321,8 @@ def optimize_das_de(
     # One complete correlation generation needs N/2 initial evaluations
     # and N offspring evaluations. Enforce this minimum.
     minimum_cor_fes = 3 * half
+    if max_evals < minimum_cor_fes:
+        raise ValueError("max_evals must allow one complete paired correlation generation")
     cor_budget = max(minimum_cor_fes,
                      int(np.ceil(0.05 * max_evals)) if correlation_evals is None
                      else int(correlation_evals))

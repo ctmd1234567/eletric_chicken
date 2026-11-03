@@ -176,6 +176,8 @@ samples/video_results/run_编号/
 
 ## 代码与文档
 
+Det-MSCEA 增强流程正在 [Draft PR #2](https://github.com/ctmd1234567/eletric_chicken/pull/2) 中增量审计与验证：[使用说明](docs/det_mscea_full.md) · [算法审计](docs/det_mscea_audit.md) · [阶段验收](docs/det_mscea_acceptance.md)。当前通过合成测试和真实 YOLO 特征适配器检查；仍缺人工验收实例 Mask、MSCEA 全文及完整 B0–B8 实验定义，尚无真实增强样本或正式效果结论。
+
 ```text
 scripts/                 检测、比较、训练及数据处理入口
 sentinel/

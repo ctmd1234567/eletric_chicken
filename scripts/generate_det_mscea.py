@@ -8,14 +8,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import time
 from collections import defaultdict
 from pathlib import Path
 
 import cv2
 import numpy as np
-import torch
-import torch.nn.functional as F
-from ultralytics import YOLO
 
 if __package__:
     from . import _bootstrap
@@ -66,11 +64,11 @@ def _bbox_from_yolo(box, width, height):
 
 
 def _matched_confidence(detections, bbox, smoke_class_id=0, match_iou=0.10):
-    scores = [
-        det["confidence"] for det in detections
+    matches = [
+        (_box_iou(det["bbox"], bbox), det["confidence"]) for det in detections
         if det["class_id"] == smoke_class_id and _box_iou(det["bbox"], bbox) >= match_iou
     ]
-    return max(scores) if scores else None
+    return max(matches)[1] if matches else None
 
 
 def _new_background_confidence(
@@ -83,42 +81,93 @@ def _new_background_confidence(
     baseline_iou=0.50,
 ):
     rx1, ry1, rx2, ry2 = roi_xyxy
+    def outside(box):
+        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+        return not (rx1 <= cx < rx2 and ry1 <= cy < ry2)
     baseline_boxes = [
         det["bbox"] for det in baseline_detections
-        if det["class_id"] == smoke_class_id
+        if det["class_id"] == smoke_class_id and outside(det["bbox"])
     ]
     new_scores = []
-    for det in candidate_detections:
+    # Consume baseline matches once, highest IoU first, independent of order.
+    pairs = sorted((
+        (_box_iou(det["bbox"], old), i, j)
+        for i, det in enumerate(candidate_detections)
+        if det["class_id"] == smoke_class_id and outside(det["bbox"])
+        for j, old in enumerate(baseline_boxes)
+        if _box_iou(det["bbox"], old) >= baseline_iou
+    ), reverse=True)
+    matched, consumed = set(), set()
+    for _, i, j in pairs:
+        if i not in matched and j not in consumed:
+            matched.add(i)
+            consumed.add(j)
+    for index, det in enumerate(candidate_detections):
         if det["class_id"] != smoke_class_id:
             continue
         box = det["bbox"]
-        if _box_iou(box, target_bbox) >= 0.10:
+        if not outside(box):
             continue
-        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
-        if rx1 <= cx <= rx2 and ry1 <= cy <= ry2:
-            continue
-        if any(_box_iou(box, old) >= baseline_iou for old in baseline_boxes):
+        if index in matched:
             continue
         new_scores.append(det["confidence"])
     return max(new_scores, default=0.0)
+
+
+def feature_crop_bounds(bbox, image_shape, input_shape, feature_shape):
+    """Map original xyxy through centered LetterBox (auto=False) into a grid."""
+    height, width = image_shape[:2]
+    ih, iw = input_shape
+    fh, fw = feature_shape
+    ratio = min(iw / width, ih / height)
+    # Match Ultralytics LetterBox's integer resize and asymmetric padding.
+    px = round((iw - round(width * ratio)) / 2 - 0.1)
+    py = round((ih - round(height * ratio)) / 2 - 0.1)
+    x1 = int(np.floor((bbox[0] * ratio + px) * fw / iw))
+    y1 = int(np.floor((bbox[1] * ratio + py) * fh / ih))
+    x2 = int(np.ceil((bbox[2] * ratio + px) * fw / iw))
+    y2 = int(np.ceil((bbox[3] * ratio + py) * fh / ih))
+    x1, y1 = np.clip(x1, 0, fw - 1), np.clip(y1, 0, fh - 1)
+    return int(x1), int(y1), int(np.clip(x2, x1 + 1, fw)), int(np.clip(y2, y1 + 1, fh))
 
 
 class FrozenYOLOFeatureEvaluator:
     """YOLO predictor plus Detect-head input feature capture."""
 
     def __init__(self, weights: Path, *, imgsz=960, conf=0.001, iou=0.7, device="0"):
+        import torch
+        from ultralytics import YOLO
+        from ultralytics.nn.modules.head import Detect
+
         self.model = YOLO(str(weights))
+        if self.model.task != "detect" or str(self.model.names.get(0, "")).lower() != "smoke":
+            raise ValueError("Det-MSCEA requires a detection model with smoke class 0")
         self.imgsz = int(imgsz)
         self.conf = float(conf)
         self.iou = float(iou)
         self.device = device
         self.feature_maps = None
 
-        detector = self.model.model
+        # Current Ultralytics deep-copies the module in setup_model. Register
+        # hooks on the actual inference model *after* setup, otherwise hooks
+        # (and their bound owner) are copied or may never reach this evaluator.
+        predictor = self.model._smart_load("predictor")(
+            overrides={**self.model.overrides, "mode": "predict", "device": device,
+                       "imgsz": self.imgsz, "conf": self.conf, "iou": self.iou,
+                       "rect": False, "save": False, "verbose": False},
+            _callbacks=self.model.callbacks)
+        predictor.setup_model(model=self.model.model, verbose=False)
+        self.model.predictor = predictor
+        detector = predictor.model.model
+        detector.requires_grad_(False)
         layers = getattr(detector, "model", None)
         if layers is None or len(layers) == 0:
             raise RuntimeError("Unsupported Ultralytics model: Detect head not found")
         self.detect_head = layers[-1]
+        if not isinstance(self.detect_head, Detect):
+            raise RuntimeError("Unsupported model: final module is not a YOLO Detect head")
+        self.input_shape = None
+        self.input_hook = detector.register_forward_pre_hook(self._capture_input)
         self.hook = self.detect_head.register_forward_pre_hook(self._capture_features)
         stride = getattr(self.detect_head, "stride", None)
         if stride is None:
@@ -127,8 +176,15 @@ class FrozenYOLOFeatureEvaluator:
             self.strides = [int(x) for x in stride.detach().cpu().tolist()]
         else:
             self.strides = [int(x) for x in stride]
+        if not self.strides or min(self.strides) <= 0:
+            self.close()
+            raise RuntimeError("Detect head has invalid strides")
+
+    def _capture_input(self, module, inputs):
+        self.input_shape = tuple(map(int, inputs[0].shape[-2:]))
 
     def _capture_features(self, module, inputs):
+        import torch
         if not inputs:
             self.feature_maps = None
             return
@@ -141,6 +197,7 @@ class FrozenYOLOFeatureEvaluator:
             self.feature_maps = None
 
     def predict(self, image):
+        import torch
         self.feature_maps = None
         with torch.inference_mode():
             results = self.model.predict(
@@ -150,7 +207,6 @@ class FrozenYOLOFeatureEvaluator:
                 iou=self.iou,
                 device=self.device,
                 rect=False,
-                half=False,
                 verbose=False,
                 save=False,
                 augment=False,
@@ -159,6 +215,8 @@ class FrozenYOLOFeatureEvaluator:
             raise RuntimeError("YOLO returned no result for a single image")
         if self.feature_maps is None:
             raise RuntimeError("Detect-head feature hook did not capture feature maps")
+        if len(self.feature_maps) != len(self.strides):
+            raise RuntimeError("Detect feature-level count does not match stride count")
         result = results[0]
         boxes = result.boxes
         if boxes is None or len(boxes) == 0:
@@ -175,10 +233,12 @@ class FrozenYOLOFeatureEvaluator:
         self.feature_maps = None
         return detections, maps
 
-    def level_for_bbox(self, bbox):
+    def level_for_bbox(self, bbox, image_shape):
         width = max(1.0, float(bbox[2] - bbox[0]))
         height = max(1.0, float(bbox[3] - bbox[1]))
-        target_stride = max(width, height) / 8.0
+        side = int(np.ceil(self.imgsz / max(self.strides))) * max(self.strides)
+        ratio = min(side / image_shape[1], side / image_shape[0])
+        target_stride = max(width, height) * ratio / 8.0
         return min(
             range(len(self.strides)),
             key=lambda i: abs(np.log(max(1e-6, self.strides[i] / target_stride))),
@@ -187,30 +247,18 @@ class FrozenYOLOFeatureEvaluator:
     def feature_for_bbox(self, feature_maps, bbox, image_shape, level):
         if not 0 <= level < len(feature_maps):
             raise ValueError("requested feature level is unavailable")
-        image_height, image_width = image_shape[:2]
-        ratio = min(self.imgsz / image_width, self.imgsz / image_height)
-        resized_width = image_width * ratio
-        resized_height = image_height * ratio
-        pad_x = (self.imgsz - resized_width) / 2.0
-        pad_y = (self.imgsz - resized_height) / 2.0
-
         feature = feature_maps[level]
         if feature.ndim != 4 or feature.shape[0] != 1:
             raise ValueError("expected a single-image BCHW feature map")
         _, _, feature_height, feature_width = feature.shape
-        sx, sy = feature_width / self.imgsz, feature_height / self.imgsz
-        x1 = int(np.floor((bbox[0] * ratio + pad_x) * sx))
-        y1 = int(np.floor((bbox[1] * ratio + pad_y) * sy))
-        x2 = int(np.ceil((bbox[2] * ratio + pad_x) * sx))
-        y2 = int(np.ceil((bbox[3] * ratio + pad_y) * sy))
-        x1 = min(feature_width - 1, max(0, x1))
-        y1 = min(feature_height - 1, max(0, y1))
-        x2 = min(feature_width, max(x1 + 1, x2))
-        y2 = min(feature_height, max(y1 + 1, y2))
+        if self.input_shape is None:
+            raise RuntimeError("actual YOLO input shape has not been captured")
+        x1, y1, x2, y2 = feature_crop_bounds(
+            bbox, image_shape, self.input_shape, (feature_height, feature_width))
         crop = feature[:, :, y1:y2, x1:x2]
         if crop.numel() == 0:
             raise ValueError("instance ROI maps to an empty feature crop")
-        pooled = F.adaptive_avg_pool2d(crop.float(), output_size=(1, 1))
+        pooled = crop.float().mean(dim=(2, 3), keepdim=True)
         vector = pooled.flatten().detach().cpu().numpy().astype(np.float32)
         if not np.isfinite(vector).all():
             raise ValueError("non-finite detector feature vector")
@@ -218,6 +266,8 @@ class FrozenYOLOFeatureEvaluator:
 
     def close(self):
         self.hook.remove()
+        self.input_hook.remove()
+        self.feature_maps = None
 
 
 def _load_manifest(path: Path):
@@ -234,6 +284,29 @@ def _load_manifest(path: Path):
         if missing:
             raise ValueError(f"manifest row {index + 1} missing fields: {sorted(missing)}")
     return rows
+
+
+def _validate_source(row, base):
+    """Validate *every* bank/target row before model loading or sampling."""
+    image_path, mask_path, label_path = (
+        _resolve(base, row[key]) for key in ("image", "mask", "label"))
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+    mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+    if image is None or mask is None or mask.shape != image.shape[:2]:
+        raise ValueError("source image/mask unreadable or size mismatch")
+    if not set(np.unique(mask)).issubset({0, 1, 255}):
+        raise ValueError("source instance mask must be binary")
+    _, parsed, _ = _read_yolo_label(label_path)
+    index = row["target_label_index"]
+    if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(parsed):
+        raise ValueError("target_label_index must index a nonempty YOLO label line")
+    if parsed[index][0] != 0:
+        raise ValueError("all reference and target instances must be smoke class 0")
+    bbox = mask_to_bbox(mask)
+    h, w = mask.shape
+    if _box_iou(bbox, _bbox_from_yolo(parsed[index], w, h)) < 0.5:
+        raise ValueError("source mask and target YOLO bbox IoU is below 0.5")
+    return image_path, mask_path, label_path, bbox, mask.shape
 
 
 def generate(
@@ -277,19 +350,14 @@ def generate(
             len(rows), size=min(max_instances, len(rows)), replace=False
         )
     )
-    level_by_row = {}
+    shape_by_row = {}
     bbox_by_row = {}
     mask_by_row = {}
     label_by_row = {}
     image_by_row = {}
     for index, row in enumerate(rows):
-        image_path = _resolve(manifest.parent, row["image"])
-        mask_path = _resolve(manifest.parent, row["mask"])
-        label_path = _resolve(manifest.parent, row["label"])
-        mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-        if mask is None:
-            raise ValueError(f"cannot read instance mask: {mask_path}")
-        bbox = mask_to_bbox((mask > 0).astype(np.uint8))
+        image_path, mask_path, label_path, bbox, shape = _validate_source(row, manifest.parent)
+        shape_by_row[index] = shape
         image_by_row[index] = image_path
         mask_by_row[index] = mask_path
         label_by_row[index] = label_path
@@ -303,7 +371,7 @@ def generate(
         # Select a deterministic, size-matched reference bank for each feature level.
         buckets = defaultdict(list)
         for index in range(len(rows)):
-            buckets[evaluator.level_for_bbox(bbox_by_row[index])].append(index)
+            buckets[evaluator.level_for_bbox(bbox_by_row[index], shape_by_row[index])].append(index)
         reference_indices = set(target_indices)
         for level, indices in buckets.items():
             if len(indices) > max_reference_instances:
@@ -331,7 +399,7 @@ def generate(
                         f"source mask/image size mismatch for manifest row {index + 1}"
                     )
                 bbox = bbox_by_row[index]
-                level = evaluator.level_for_bbox(bbox)
+                level = evaluator.level_for_bbox(bbox, image.shape)
                 feature_by_row[index] = evaluator.feature_for_bbox(
                     feature_maps, bbox, image.shape, level
                 )
@@ -363,7 +431,7 @@ def generate(
             vectors = [
                 feature_by_row[index]
                 for index in sorted(reference_indices)
-                if evaluator.level_for_bbox(bbox_by_row[index]) == level
+                if evaluator.level_for_bbox(bbox_by_row[index], shape_by_row[index]) == level
                 and index in feature_by_row
             ]
             if vectors:
@@ -377,11 +445,21 @@ def generate(
         masks_dir = output / "masks" / "train"
         for folder in (images_dir, labels_dir, masks_dir):
             folder.mkdir(parents=True, exist_ok=True)
+        diagnostics_dir = output / "diagnostics"
+        diagnostics_dir.mkdir()
+        reference_bank_path = output / "reference_bank.json"
+        reference_bank_path.write_text(json.dumps([
+            {"manifest_row": i, "image": str(image_by_row[i]),
+             "image_sha256": _sha256(image_by_row[i]),
+             "level": evaluator.level_for_bbox(bbox_by_row[i], shape_by_row[i])}
+            for i in sorted(reference_indices)
+        ], indent=2), encoding="utf-8")
+        reference_bank_sha256 = _sha256(reference_bank_path)
 
         records = []
         for order, index in enumerate(eligible_target_indices, start=1):
             original_conf = confidence_by_row[index]
-            level = evaluator.level_for_bbox(bbox_by_row[index])
+            level = evaluator.level_for_bbox(bbox_by_row[index], shape_by_row[index])
             if level not in feature_banks:
                 skipped.append({"manifest_row": index, "reason": "empty feature-size bucket"})
                 continue
@@ -405,6 +483,15 @@ def generate(
             if int(target_box[0]) != 0:
                 skipped.append({"manifest_row": index, "reason": "target is not smoke class 0"})
                 continue
+            # Only the target label is updated. Reject ROIs that could deform
+            # pixels belonging to another annotated object.
+            from sentinel.augmentation.mls import local_contour_controls
+            _, _, source_roi = local_contour_controls(mask, roi_scale=roi_scale,
+                                                      contour_points=contour_points)
+            if any(_box_iou(_bbox_from_yolo(box, image.shape[1], image.shape[0]), source_roi) > 0
+                   for j, box in enumerate(parsed) if j != target_index):
+                skipped.append({"manifest_row": index, "reason": "ROI overlaps another labeled instance"})
+                continue
             baseline_detections = detections_by_row[index]
 
             def evaluate_candidate(warped_image, warped_mask, bbox, roi):
@@ -424,6 +511,7 @@ def generate(
                     "background_confidence": background_conf,
                 }
 
+            search_started = time.perf_counter()
             result = optimize_mls_instance(
                 image,
                 mask,
@@ -439,6 +527,19 @@ def generate(
                 seed=seed + index,
                 top_k=top_k,
             )
+            diagnostics = {
+                "generation_seconds": time.perf_counter() - search_started,
+                "manifest_row": index, "seed": seed + index,
+                "evaluations": result.optimizer.evaluations,
+                "evaluation_history": result.evaluation_history,
+                "search_history": result.optimizer.history,
+                "kappa": result.optimizer.kappa,
+                "comparison": result.optimizer.comparison,
+                "allocation": result.optimizer.allocation,
+                "region_boxes": result.expanded_region_boxes,
+            }
+            (diagnostics_dir / f"row_{index:05d}.json").write_text(
+                json.dumps(diagnostics, indent=2), encoding="utf-8")
             if not result.candidates:
                 skipped.append({
                     "manifest_row": index,
@@ -465,12 +566,20 @@ def generate(
                 )
                 label_out.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
                 records.append({
+                    "algorithm": "det_mscea",
+                    "human_review": {"status": "pending", "reviewer": "", "notes": ""},
+                    "reference_bank": "reference_bank.json",
+                    "reference_bank_sha256": reference_bank_sha256,
                     "image": image_out.relative_to(output).as_posix(),
                     "label": label_out.relative_to(output).as_posix(),
                     "mask": mask_out.relative_to(output).as_posix(),
                     "source_image": str(image_path),
                     "source_mask": str(mask_path),
                     "source_label": str(label_path),
+                    "source_sha256": {"image": _sha256(image_path),
+                                      "mask": _sha256(mask_path), "label": _sha256(label_path)},
+                    "output_sha256": {"image": _sha256(image_out),
+                                      "mask": _sha256(mask_out), "label": _sha256(label_out)},
                     "manifest_row": index,
                     "target_label_index": target_index,
                     "feature_level": level,

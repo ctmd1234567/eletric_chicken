@@ -8,6 +8,8 @@ on:
       - "sentinel/augmentation/**"
       - "scripts/generate_det_mscea.py"
       - "tests/test_mscea_optimizer.py"
+      - "tests/test_mscea_adapter.py"
+      - "scripts/prepare_mls_b3.py"
       - "tests/test_mls_augmentation.py"
       - ".github/workflows/det-mscea-tests.yml"
   pull_request:
@@ -15,6 +17,8 @@ on:
       - "sentinel/augmentation/**"
       - "scripts/generate_det_mscea.py"
       - "tests/test_mscea_optimizer.py"
+      - "tests/test_mscea_adapter.py"
+      - "scripts/prepare_mls_b3.py"
       - "tests/test_mls_augmentation.py"
 
 jobs:
@@ -30,4 +34,4 @@ jobs:
       - name: Compile Det-MSCEA entry point
         run: python -m py_compile scripts/generate_det_mscea.py sentinel/augmentation/das_de.py sentinel/augmentation/mscea.py sentinel/augmentation/mls.py
       - name: Run MLS and MSCEA tests
-        run: python -m unittest tests.test_mls_augmentation tests.test_mscea_optimizer -v
+        run: python -m unittest tests.test_mls_augmentation tests.test_mscea_optimizer tests.test_mscea_adapter -v
