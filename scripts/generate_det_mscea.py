@@ -515,6 +515,18 @@ def generate(
             "target_instances_sampled": len(target_indices),
             "target_instances_eligible": len(eligible_target_indices),
             "reference_instances": len(reference_indices),
+            "feature_bank_sizes": {
+                str(level): int(features.shape[0])
+                for level, features in feature_banks.items()
+            },
+            "matching_and_constraints": {
+                "smoke_class_id": 0,
+                "instance_match_iou": 0.10,
+                "background_baseline_iou": 0.50,
+                "background_confidence_threshold": 0.10,
+                "bbox_area_ratio_range": [0.70, 1.40],
+                "max_bottom_shift_ratio": 0.05,
+            },
             "generated": len(records),
             "skipped": skipped,
             "settings": {
