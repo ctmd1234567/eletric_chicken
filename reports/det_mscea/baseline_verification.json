@@ -1,0 +1,50 @@
+{
+  "verify_models": {
+    "file": "runs/dfire_ludan/experiment_002/train/weights/best.pt",
+    "load": "ok",
+    "sha256": "22fd0c9f6d2498e3ea3d5c3f456f1f13393d66e068a4d1d6c698b82777f2f810",
+    "sha256_match": true,
+    "load_seconds": 1.175,
+    "task": "detect",
+    "classes": {
+      "0": "smoke",
+      "1": "fire"
+    },
+    "checkpoint_ultralytics": "8.4.192",
+    "end2end": false,
+    "params": 3011238,
+    "train_imgsz": 960,
+    "native_imgsz": 960,
+    "infer_seconds": 1.374,
+    "infer_imgsz": 960,
+    "infer_iou": 0.7,
+    "iou_source": "checkpoint train_args",
+    "infer_conf": 0.25,
+    "conf_source": "ultralytics predict default (author example has no override)",
+    "infer_device": "cuda:0",
+    "n_boxes": 0,
+    "detections": []
+  },
+  "compare_models_summary": [
+    {
+      "model": "dfire_ludan",
+      "weights_sha256": "22fd0c9f6d2498e3ea3d5c3f456f1f13393d66e068a4d1d6c698b82777f2f810",
+      "end2end": "False",
+      "imgsz": "960",
+      "conf_threshold": "0.25",
+      "conf_source": "ultralytics predict default (author example has no override)",
+      "iou_threshold": "0.7",
+      "iou_source": "checkpoint train_args",
+      "rect": "True",
+      "weights": "runs/dfire_ludan/experiment_002/train/weights/best.pt",
+      "device": "cuda:0",
+      "frames": "1",
+      "frames_with_detection": "0",
+      "detect_rate": "0.0",
+      "mean_ms": "1078.4",
+      "p95_ms": "1078.4",
+      "fps_equiv": "0.9"
+    }
+  ],
+  "interpretation": "Single real-image entry-point check; no recall, accuracy, or augmentation benefit established."
+}

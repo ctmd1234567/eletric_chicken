@@ -176,6 +176,8 @@ samples/video_results/run_编号/
 
 ## 代码与文档
 
+Det-MSCEA 检测任务适配实现：[使用说明](docs/det_mscea_full.md) · [算法审计](docs/det_mscea_audit.md) · [阶段验收](docs/det_mscea_acceptance.md) · [Mask 池化与双类别误报修复](docs/det_mscea_review2.md)。当前通过合成测试和真实 YOLO 特征适配器检查；仍缺人工验收实例 Mask、MSCEA 全文及完整 B0–B8 实验定义，尚无真实增强样本或正式效果结论。按用户要求，后续代码经审核和验证后直接提交主干。
+
 ```text
 scripts/                 检测、比较、训练及数据处理入口
 sentinel/

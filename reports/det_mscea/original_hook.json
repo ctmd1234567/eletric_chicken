@@ -1,0 +1,5 @@
+{
+  "baseline_hook": "failed",
+  "error_type": "TypeError",
+  "error": "cannot pickle '_thread.lock' object"
+}

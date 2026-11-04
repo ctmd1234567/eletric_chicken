@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-04",
+  "audit_baseline": "14d01b53",
+  "focused_tests": {
+    "run": 42,
+    "passed": 42
+  },
+  "full_local_suite": {
+    "run": 71,
+    "passed": 70,
+    "skipped": 1,
+    "skip_reason": "Existing LwST weights/source unavailable"
+  },
+  "review_status": "incremental diff reviewed; synthetic and adapter checks passed; research acceptance pending",
+  "new_real_smoke_masks": 0,
+  "real_smoke_mask_optimizations": 0,
+  "human_approved_augmentations": 0,
+  "formal_training_runs": 0,
+  "annotation_queue_instances": 3,
+  "delivery_policy": "review then direct main commit; no new PR",
+  "ci_status": "See GitHub Actions for the committed main SHA; local tests do not imply remote CI success"
+}

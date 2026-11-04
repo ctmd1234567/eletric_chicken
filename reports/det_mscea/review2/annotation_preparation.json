@@ -1,0 +1,62 @@
+{
+  "seed": 20261104,
+  "status": "awaiting_polygon_annotation_and_human_review",
+  "actual_masks": 0,
+  "examined_images": 18,
+  "instances": [
+    {
+      "source_image": "datasets/ebike_focused_20261031_v2/images/train/user_manual_current_c720760d8f34b3097348.png",
+      "source_label": "datasets/ebike_focused_20261031_v2/labels/train/user_manual_current_c720760d8f34b3097348.txt",
+      "target_label_index": 0,
+      "bbox_xyxy": [
+        318.53984,
+        23.39995400000001,
+        394.20000000000005,
+        179.979846
+      ],
+      "source_confidence": 0.08321513235569,
+      "source_image_sha256": "c720760d8f34b309734848a4eb8578b69a959c9dbadc9a16623140dc8d640282",
+      "source_label_sha256": "f1cbe12d850026d29d24f48f4f327d83d3289059770697e682f84ab11fe2fe75",
+      "annotation_status": "needs_polygon_and_human_review",
+      "source_dataset": "user_manual_current",
+      "image": "images/user_manual_current_c720760d8f34b3097348.png",
+      "label": "detection_labels/user_manual_current_c720760d8f34b3097348.txt"
+    },
+    {
+      "source_image": "datasets/ebike_focused_20261031_v2/images/train/user_manual_current_afdcf5c93a7fb08e68a9.png",
+      "source_label": "datasets/ebike_focused_20261031_v2/labels/train/user_manual_current_afdcf5c93a7fb08e68a9.txt",
+      "target_label_index": 0,
+      "bbox_xyxy": [
+        374.57984,
+        49.219988,
+        444.86976,
+        207.00992
+      ],
+      "source_confidence": 0.11581862717866898,
+      "source_image_sha256": "afdcf5c93a7fb08e68a9856d8395fac8d27083475603a25bf384b7d3d2824eb2",
+      "source_label_sha256": "b3725609b1745de93e10d2d60eac15e1a91fc91ce92f5dd80211bc6c6139279c",
+      "annotation_status": "needs_polygon_and_human_review",
+      "source_dataset": "user_manual_current",
+      "image": "images/user_manual_current_afdcf5c93a7fb08e68a9.png",
+      "label": "detection_labels/user_manual_current_afdcf5c93a7fb08e68a9.txt"
+    },
+    {
+      "source_image": "datasets/ebike_focused_20261031_v2/images/train/user_manual_current_dde24691761b2b45e1a2.png",
+      "source_label": "datasets/ebike_focused_20261031_v2/labels/train/user_manual_current_dde24691761b2b45e1a2.txt",
+      "target_label_index": 1,
+      "bbox_xyxy": [
+        35.699976,
+        8.699999999767227e-05,
+        265.89996,
+        73.020057
+      ],
+      "source_confidence": 0.09183406829833984,
+      "source_image_sha256": "dde24691761b2b45e1a243d9d5911a909e5f0ca608a70a3805a5ec0362743bd6",
+      "source_label_sha256": "4c26785f4d7233a5d163dddb9f69c3da66ab6784fd0caaa4caeeaf9c8c514a1a",
+      "annotation_status": "needs_polygon_and_human_review",
+      "source_dataset": "user_manual_current",
+      "image": "images/user_manual_current_dde24691761b2b45e1a2.png",
+      "label": "detection_labels/user_manual_current_dde24691761b2b45e1a2.txt"
+    }
+  ]
+}
