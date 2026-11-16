@@ -92,6 +92,8 @@ D-Fire 的准确入口：
 
 ## SAM 2.1 small 与本地掩膜预览（2026-11-16）
 
+后续增加两篇电动车/电池起烟新闻的 6 个动态图、1 个视频，共 315 张抽帧，来源见 [原媒体候选记录](docs/mscea_raw_review.md)。原媒体来自央视新闻和凤凰网转载页，未核实训练/再分发许可，仅用于本地人工审阅；SAM 自动候选未做烟雾分类或人工验收，不进入正式 MSCEA、训练/验证/测试或云端包，不随 Git 分发。
+
 分割辅助权重来自 [Meta 官方 SAM 2.1 small](https://huggingface.co/facebook/sam2.1-hiera-small)，代码来自 [facebookresearch/sam2](https://github.com/facebookresearch/sam2)，代码和权重按上游 Apache-2.0 许可使用。固定 revision、SHA-256 和本地独立环境说明见 [部署记录](docs/sam21_local_pilot.md)。源码/权重在本地保留上游许可，不随本次 Git 提交分发。
 
 新增 [北京日报充电车棚监控图](https://xinwen.bjd.com.cn/content/s6a38ff80e4b03fa51a803d30.html) 仅用于本地分割效果审阅；没有核实训练或再分发许可，不加入训练/验证/测试、增强正式清单或云端包。原有电动车新闻帧沿用各自限制。SAM 生成掩膜不产生原素材的额外使用授权；全部为待人工审核候选。
