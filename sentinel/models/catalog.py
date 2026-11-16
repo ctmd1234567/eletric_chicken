@@ -98,3 +98,18 @@ MODELS = {
 YOLO_MODELS = [name for name in MODELS if name != "lwst_fsd"]
 # 保留原默认集合中仍在用的模型；候选 Safety / LwST 需显式选择。
 DEFAULT_VIDEO_MODELS = ['firesmockdetect_y11m', 'early_fire_smoke', 'dfire_yolov8n']
+
+# Prompted segmentation helpers have a separate API and are not YOLO detectors.
+SEGMENTATION_MODELS = {
+    'sam21_small': {
+        'repo': 'facebook/sam2.1-hiera-small',
+        'revision': 'ee5bba1d82bb8749febdf90f45e84b687142ba03',
+        'source_revision': '2b90b9f5ceec907a1c18123530e92e794ad901a4',
+        'file': 'sam2.1_hiera_small.pt',
+        'size': 184416285,
+        'sha256': '6d1aa6f30de5c92224f8172114de081d104bbd23dd9dc5c58996f0cad5dc4d38',
+        'dest': 'models/segmentation/sam2.1_hiera_small.pt',
+        'config': 'configs/sam2.1/sam2.1_hiera_s.yaml',
+        'license': 'Apache-2.0',
+    },
+}

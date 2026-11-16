@@ -1,5 +1,7 @@
 # 代码在哪里改
 
+SAM 2.1 small 小批量掩膜预览：`scripts/preview_sam_masks.py` → `sentinel/training/sam_mask_review.py`，独立环境和候选人工审核边界见 [本地预览记录](sam21_local_pilot.md)。分割辅助权重在 `catalog.py` 的 `SEGMENTATION_MODELS` 登记。
+
 本轮场景补充和重点采样：`scripts/prepare_urban_smoke.py` → `sentinel/training/urban_data.py`；训练起点及默认参数在 `scripts/train_expanded_smoke.py`，执行和基线评测在 `sentinel/training/dfire_small_smoke.py`；私有云端包和路径重建在 `sentinel/training/cloud_bundle.py`。当前操作说明见 `docs/urban_smoke_autodl.md`。
 
 日常运行只改 `scripts/run_models.py` 或 `scripts/run_video_baseline.py` 顶部的设置，然后直接运行该文件。当前选中的模型、素材和自定义尺寸以这两个文件为准；整理期间的本地配置修改也已保留。命令行入口仍支持原来的 `python scripts/xxx.py ...`。
